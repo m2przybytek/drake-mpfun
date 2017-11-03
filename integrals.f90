@@ -24,7 +24,8 @@ end type table4Data
 
 type cont4Data
 integer :: n_0,n_1
-type(mp_real),allocatable :: val_0(:),val_1(:)
+integer :: par,n
+type(mp_real),allocatable :: val(:)
 end type cont4Data
 
 type prodUnitData
@@ -365,19 +366,21 @@ call prod2H_free(prod2H)
 
 end subroutine integrals_SH
 
-subroutine integrals_J(matJ_S,matJ_T,matC)
+subroutine integrals_J(matJ_S,matJ_T,matC,parC)
 implicit none
 type(mp_real),intent(out) :: matJ_S(:,:,:,:),matJ_T(:,:,:,:)
 type(mp_real),intent(in) :: matC(:,:)
-integer :: n1,n2,nC,iocc,jocc,i,j,k,l,ij,kl,v2
+integer,intent(in) :: parC(:)
+integer :: n1,n2,nC,iocc,jocc,parCC,i,j,k,l,ij,kl,v1,v2
 real(8) :: safe_half
 type(mp_real) :: alpha_invsqrt,a1,a2,a12,c0,c2
-type(mp_real) :: val
+type(mp_real) :: val,val_A1,val_A2,val_B1,val_B2,val_A,val_B
 type(prod2HData) :: prod2H
 type(table2Data) :: aux,auxOP
 type(table4Data) :: aux2C
 type(mp_real),allocatable :: ints(:,:)
-type(mp_real),allocatable :: matD(:,:),sum_0(:),sum_1(:)
+integer,allocatable :: pair_list(:,:)
+type(mp_real),allocatable :: CC(:,:),sum_0(:),sum_1(:)
 type(cont4Data),allocatable :: cont4(:)
 
 safe_half = 0.5d0 - 0.5d0/(G_nprim+1)
@@ -424,7 +427,19 @@ enddo
 call table2_free(auxOP)
 call table2_free(aux)
 
-allocate(matD(0:G_nbas-1,0:G_nbas-1),sum_0(G_nbas),sum_1(G_nbas))
+n1 = 2
+n2 = G_npair
+allocate(pair_list(n1,n2))
+i = -1
+j = -1
+ij = 0
+do while(G_next_pair(i,j))
+   ij = ij + 1
+   pair_list(1,ij) = i
+   pair_list(2,ij) = j
+enddo
+
+allocate(CC(0:G_nbas-1,0:G_nbas-1),sum_0(G_nbas),sum_1(G_nbas))
 
 nC = ((G_nprim+1)*(G_nprim+2))/2
 allocate(cont4(nC))
@@ -436,7 +451,7 @@ do j=0,G_nprim
         nC = i + j + 2*(G_nbas-1)
         this%n_0 = nC/2+1
         this%n_1 = (nC+1)/2
-        allocate(this%val_0(this%n_0),this%val_1(this%n_1))
+        allocate(this%val(max(this%n_0,this%n_1)))
       end associate
    enddo
 enddo
@@ -444,7 +459,8 @@ enddo
 do jocc=1,G_nocc
    do iocc=1,jocc
 
-      call outer_vecproduct(G_nbas,matC(:,iocc),matC(:,jocc),matD)
+      call outer_vecproduct(G_nbas,matC(:,iocc),matC(:,jocc),CC)
+      parCC = mod(parC(iocc)+parC(jocc),2)
 
 !$OMP PARALLEL SECTIONS PRIVATE(v2,val)
 !$OMP SECTION
@@ -452,8 +468,8 @@ do jocc=1,G_nocc
       do j=0,G_nbas-1
          do i=mod(j,2),j,2
             v2 = (i+j)/2+1
-            val = matD(i,j)
-            if(i/=j) val = val + matD(j,i)
+            val = CC(i,j)
+            if(i/=j) val = val + CC(j,i)
             call prod2H_accumulate(v2,val,prod2H%unit(i,j),sum_0)
          enddo
       enddo
@@ -462,7 +478,7 @@ do jocc=1,G_nocc
       do j=0,G_nbas-1
          do i=mod(j+1,2),j,2
             v2 = (i+j+1)/2
-            val = matD(i,j) + matD(j,i)
+            val = CC(i,j) + CC(j,i)
             call prod2H_accumulate(v2,val,prod2H%unit(i,j),sum_1)
          enddo
       enddo
@@ -480,63 +496,116 @@ do jocc=1,G_nocc
          v2 = i + j
          if(mod(v2,2)==0) then
             v2 = v2/2+1
-            call cont_product2(&
-                 aux2C%se_00,aux2C%val_00,v2,prod2H%unit(i,j),&
-                 cont4(ij)%n_0,cont4(ij)%val_0)
-            call cont_product2(&
-                 aux2C%se_10,aux2C%val_10,v2,prod2H%unit(i,j),&
-                 cont4(ij)%n_1,cont4(ij)%val_1)
+            select case(parCC)
+            case(0)
+               associate(this => cont4(ij))
+                 this%par = 0
+                 this%n   = this%n_0
+                 call cont_product2(&
+                      aux2C%se_00,aux2C%val_00,v2,prod2H%unit(i,j),&
+                      this%n,this%val)
+               end associate
+            case(1)
+               associate(this => cont4(ij))
+                 this%par = 1
+                 this%n   = this%n_1
+                 call cont_product2(&
+                      aux2C%se_10,aux2C%val_10,v2,prod2H%unit(i,j),&
+                      this%n,this%val)
+               end associate
+            end select
          else
             v2 = (v2+1)/2
-            call cont_product2(&
-                 aux2C%se_01,aux2C%val_01,v2,prod2H%unit(i,j),&
-                 cont4(ij)%n_0,cont4(ij)%val_0)
-            call cont_product2(&
-                 aux2C%se_11,aux2C%val_11,v2,prod2H%unit(i,j),&
-                 cont4(ij)%n_1,cont4(ij)%val_1)
+            select case(parCC)
+            case(0)
+               associate(this => cont4(ij))
+                 this%par = 1
+                 this%n   = this%n_1
+                 call cont_product2(&
+                      aux2C%se_11,aux2C%val_11,v2,prod2H%unit(i,j),&
+                      this%n,this%val)
+               end associate
+            case(1)
+               associate(this => cont4(ij))
+                 this%par = 0
+                 this%n   = this%n_0
+                 call cont_product2(&
+                      aux2C%se_01,aux2C%val_01,v2,prod2H%unit(i,j),&
+                      this%n,this%val)
+               end associate
+            end select
          endif
       enddo
 !$OMP END PARALLEL DO
 
       call table4_free(aux2C)
 
-      kl = 0
-      do l=0,G_nprim
-         do k=0,l
-            kl = kl + 1
+!$OMP PARALLEL DO COLLAPSE(2) SCHEDULE(DYNAMIC) PRIVATE(i,j,k,l,v1,v2) &
+!$OMP PRIVATE(val_A1,val_A2,val_B1,val_B2,val_A,val_B)
+      do kl=1,G_npair
+         do ij=1,G_npair
 
-            v2 = mod(k+l,2)
+            i = pair_list(1,ij)
+            j = pair_list(2,ij)
+            k = pair_list(1,kl)
+            l = pair_list(2,kl)
 
-            ij = 0
-            do j=0,G_nprim
-               do i=0,j
-                  ij = ij + 1
+            v1 = max(i,k)
+            v1 = 1 + min(i,k) + (v1*(v1+1))/2
+            v2 = j + l
+            if(cont4(v1)%par==mod(v2,2)) then
+               v2 = max(j,l)
+               v2 = 1 + min(j,l) + (v2*(v2+1))/2
+               val_A1 = cont_product1(cont4(v1)%n,cont4(v1)%val,ints(:,v2))
+            else
+               val_A1 = 0
+            endif
 
-!!$                  select case(v2)
-!!$                  case(0)
-!!$                     val = cont_product1(cont4(ij)%n_0,cont4(ij)%val_0,&
-!!$                          ints(:,kl))
-!!$                  case(1)
-!!$                     val = cont_product1(cont4(ij)%n_1,cont4(ij)%val_1,&
-!!$                          ints(:,kl))
-!!$                  end select
-!!$
-!!$                  write(*,*) i,j,k,l,dble(val)
+            v1 = max(j,l)
+            v1 = 1 + min(j,l) + (v1*(v1+1))/2
+            v2 = i + k
+            if(cont4(v1)%par==mod(v2,2)) then
+               v2 = max(i,k)
+               v2 = 1 + min(i,k) + (v2*(v2+1))/2
+               val_A2 = cont_product1(cont4(v1)%n,cont4(v1)%val,ints(:,v2))
+            else
+               val_A2 = 0
+            endif
 
-!!$                  associate(this => cont4(ij))
-!!$              if(mod(i+j,2)==1) then
-!!$                 write(*,*) i,j,this%n_1
-!!$                 do v2=1,this%n_1
-!!$                    write(*,*)  v2,dble(this%val_1(v2))
-!!$                 enddo
-!!$              endif
-!!$            end associate
+            v1 = max(i,l)
+            v1 = 1 + min(i,l) + (v1*(v1+1))/2
+            v2 = j + k
+            if(cont4(v1)%par==mod(v2,2)) then
+               v2 = max(j,k)
+               v2 = 1 + min(j,k) + (v2*(v2+1))/2
+               val_B1 = cont_product1(cont4(v1)%n,cont4(v1)%val,ints(:,v2))
+            else
+               val_B1 = 0
+            endif
 
-               enddo
-            enddo
+            v1 = max(j,k)
+            v1 = 1 + min(j,k) + (v1*(v1+1))/2
+            v2 = i + l
+            if(cont4(v1)%par==mod(v2,2)) then
+               v2 = max(i,l)
+               v2 = 1 + min(i,l) + (v2*(v2+1))/2
+               val_B2 = cont_product1(cont4(v1)%n,cont4(v1)%val,ints(:,v2))
+            else
+               val_B2 = 0
+            endif
 
+            val_A = val_A1 + val_A2
+            val_B = val_B1 + val_B2
+            matJ_S(ij,kl,iocc,jocc) = G_gfac*(val_A + val_B)
+            matJ_T(ij,kl,iocc,jocc) = G_gfac*(val_A - val_B)
+            if(iocc/=jocc) then
+               matJ_S(ij,kl,jocc,iocc) = matJ_S(ij,kl,iocc,jocc)
+               matJ_T(ij,kl,jocc,iocc) = matJ_T(ij,kl,iocc,jocc)
+            endif
+            
          enddo
       enddo
+!$OMP END PARALLEL DO
 
    enddo
 enddo
@@ -546,83 +615,43 @@ do j=0,G_nprim
    do i=0,j
       ij = ij + 1
       associate(this => cont4(ij))
-        deallocate(this%val_0,this%val_1)
+        deallocate(this%val)
       end associate
    enddo
 enddo
 deallocate(cont4)
 
-deallocate(matD,sum_0,sum_1)
+deallocate(CC,sum_0,sum_1)
 
+deallocate(pair_list)
 deallocate(ints)
 call prod2H_free(prod2H)
 
-!!$block
-!!$  integer :: i,j,k,l,p,q,v1,v2,v
-!!$  type(mp_real),allocatable :: tabs(:)
-!!$  type(mp_real) :: val
-!!$  do l=0,G_nprim
-!!$     do k=0,G_nprim
-!!$        do q=0,G_nbas-1
-!!$           do p=0,G_nbas-1
-!!$              do j=0,G_nprim
-!!$                 do i=0,G_nprim
-!!$  v1 = i + j + p + q
-!!$  v2 = k + l
-!!$  if(mod(v1+v2,2)==0) then
-!!$     if(mod(v1,2)==0) then
-!!$        v1 = v1/2+1
-!!$     else
-!!$        v1 = (v1+1)/2
-!!$     endif
-!!$     v2 = max(k,l)
-!!$     v2 = 1 + min(k,l) + (v2*(v2+1))/2
-!!$     allocate(tabs(v1))
-!!$     call combine_units(v1,tabs,prod2H%unit(i,j),prod2H%unit(p,q),&
-!!$          i+j,p+q,prod2)
-!!$     val = 0
-!!$     do v=1,v1
-!!$        val = val + tabs(v)*ints(v,v2)
-!!$     enddo
-!!$     deallocate(tabs)
-!!$  else
-!!$     val = 0
-!!$  endif
-!!$  write(*,'(6i4,3x)',advance='no') i,j,p,q,k,l
-!!$  call mpwrite(6,50,40,val)
-!!$enddo
-!!$enddo
-!!$enddo
-!!$enddo
-!!$enddo
-!!$enddo
-!!$end block
-
-!!$block
-!!$  integer :: idat,ios,i1,i2
-!!$  character(210) :: sval
-!!$  type(mp_real) :: thr,math,calc,tmp
-!!$  thr = '1.e-199'
-!!$  open(newunit=idat,file='e.dat')
-!!$  do
-!!$     read(idat,*,iostat=ios) i1,i2,sval
-!!$     if(ios/=0) exit
-!!$     if(i1<=n1.and.i2<=n2) then
-!!$        math = mpreal(sval)
-!!$        calc = table2_take(auxOP,i1,i2)
-!!$        if(math/=0) then
-!!$           tmp = (calc - math)/math
-!!$        else
-!!$           tmp = calc - math
-!!$        endif
-!!$        if(abs(tmp)>thr) then
-!!$           write(*,'(2i5,a)',advance='no') i1,i2,'   '
-!!$           call mpwrite(6,60,40,tmp)
-!!$        endif
-!!$     endif
-!!$  enddo
-!!$  close(idat)
-!!$end block
+block
+  integer :: idat,ios,i1,i2,j1,j2
+  character(210) :: sval
+  type(mp_real) :: thr,math,calc,tmp
+  thr = '1.e-26'
+  open(newunit=idat,file='matJT.dat')
+  do
+     read(idat,*,iostat=ios) i1,i2,j1,j2,sval
+     if(ios/=0) exit
+     if(i1<=G_npair.and.i2<=G_npair.and.j1<=G_nocc.and.j2<=G_nocc) then
+        math = mpreal(sval)
+        calc = matJ_T(i1,i2,j1,j2)
+        if(math/=0) then
+           tmp = (calc - math)/math
+        else
+           tmp = calc - math
+        endif
+        if(abs(tmp)>thr) then
+           write(*,'(4i5,a)',advance='no') i1,i2,j1,j2,'   '
+           call mpwrite(6,50,40,tmp)
+        endif
+     endif
+  enddo
+  close(idat)
+end block
 
 end subroutine integrals_J
 
