@@ -1,6 +1,8 @@
 module integrals
+!$ use omp_lib
 use mpmodule
 use general
+use time
 implicit none
 
 private
@@ -41,19 +43,23 @@ end type prod2HData
 type scfJauxData
 type(prod2HData) :: prod2H
 type(mp_real),allocatable :: ints(:,:)
-type(mp_real),allocatable :: sum_0(:),sum_1(:)
+type(mp_real),allocatable :: sum_0(:,:),sum_1(:,:)
 integer :: n_0,n_1
 end type scfJauxData
 
 contains
 
-subroutine integrals_scfSH(scfS,scfH)
+subroutine integrals_scfSH(scfS,scfH,IPRINT)
 implicit none
 type(mp_real),intent(out) :: scfS(0:,0:)
 type(mp_real),intent(out) :: scfH(0:,0:)
+integer,intent(in) :: IPRINT
+real(8) :: Tcpu,Twall
 type(mp_real),allocatable :: norm(:)
 type(mp_real) :: val
 integer :: i
+
+if(IPRINT>=1) call timer('START',Tcpu,Twall)
 
 allocate(norm(0:G_nbas-1))
 call G_norm_definition(G_nbas-1,norm)
@@ -75,16 +81,22 @@ enddo
 
 deallocate(norm)
 
+if(IPRINT>=1) call timer('scfSH',Tcpu,Twall)
+
 end subroutine integrals_scfSH
 
-subroutine prepare_scfJaux(scfJaux)
+subroutine prepare_scfJaux(scfJaux,IPRINT)
 implicit none
 type(scfJauxData) :: scfJaux
+integer,intent(in) :: IPRINT
+real(8) :: Tcpu,Twall
 integer :: n1,n2,i,j,ij,v2
-real(8) :: safe_half
+real(8) :: safe_nbas
 type(table2Data) :: aux22
 
-safe_half = 0.5d0 - 0.5d0/G_nbas
+if(IPRINT>=1) call timer('START',Tcpu,Twall)
+
+safe_nbas = 0.5d0 - 0.5d0/G_nbas
 
 n1 = G_nbas-1
 n2 = G_nbas-1
@@ -94,7 +106,11 @@ call prod2H_norm(scfJaux%prod2H)
 n1 = G_nbas
 n2 = (G_nbas*(G_nbas+1))/2
 allocate(scfJaux%ints(n1,n2))
-allocate(scfJaux%sum_0(n1),scfJaux%sum_1(n1))
+
+n1 = G_nbas
+n2 = 1
+!$ n2 = omp_get_max_threads()
+allocate(scfJaux%sum_0(n1,0:n2-1),scfJaux%sum_1(n1,0:n2-1))
 
 n1 = 2*(G_nbas-1)
 n2 = 2*(G_nbas-1)
@@ -105,16 +121,16 @@ scfJaux%n_1 = aux22%n1_1
 
 !$OMP PARALLEL DO SCHEDULE(DYNAMIC) PRIVATE(i,j,v2)
 do ij=1,(G_nbas*(G_nbas+1))/2
-   j = int(sqrt(0.25d0 + 2.d0*(ij-1)) - safe_half)
+   j = int(sqrt(0.25d0 + 2.d0*(ij-1)) - safe_nbas)
    i = (ij-1) - (j*(j+1))/2
    v2 = i + j
    if(mod(v2,2)==0) then
       v2 = v2/2+1
-      call ints_product2(aux22%n1_0,v2,aux22%val_0,scfJaux%prod2H%unit(i,j),&
+      call product2_unit(aux22%n1_0,aux22%val_0,v2,scfJaux%prod2H%unit(i,j),&
            scfJaux%ints(:,ij))
    else
       v2 = (v2+1)/2
-      call ints_product2(aux22%n1_1,v2,aux22%val_1,scfJaux%prod2H%unit(i,j),&
+      call product2_unit(aux22%n1_1,aux22%val_1,v2,scfJaux%prod2H%unit(i,j),&
            scfJaux%ints(:,ij))
    endif
 enddo
@@ -122,54 +138,79 @@ enddo
 
 call table2_free(aux22)
 
+if(IPRINT>=1) call timer('prepare_scfJ',Tcpu,Twall)
+
 end subroutine prepare_scfJaux
 
-subroutine integrals_scfJ(scfJ,scfD,scfJaux)
+subroutine integrals_scfJ(scfJ,scfD,scfJaux,IPRINT)
 implicit none
 type(mp_real),intent(out) :: scfJ(0:,0:)
 type(mp_real),intent(in) :: scfD(0:,0:)
 type(scfJauxData) :: scfJaux
-real(8) :: safe_half
-integer :: i,j,ij,v1
+integer,intent(in) :: IPRINT
+real(8) :: Tcpu,Twall
+real(8) :: safe_nbas
+integer :: nthr,ithr,i,j,ij,v1
 type(mp_real) :: val
 
-safe_half = 0.5d0 - 0.5d0/G_nbas
+if(IPRINT>=2) call timer('START',Tcpu,Twall)
 
-!$OMP PARALLEL
+safe_nbas = 0.5d0 - 0.5d0/G_nbas
 
-!$OMP SECTIONS PRIVATE(ij,val)
+!$OMP PARALLEL PRIVATE(ithr,i,j,v1,val)
+
+!$OMP SINGLE
+nthr = 1
+!$ nthr = omp_get_num_threads()
+!$OMP END SINGLE
+
+!$OMP SECTIONS
 !$OMP SECTION
-scfJaux%sum_0(1:scfJaux%n_0) = mpreal(0.d0)
-do j=0,G_nbas-1
-   do i=mod(j,2),j,2
-      ij = 1 + i + (j*(j+1))/2
+scfJaux%sum_0(1:scfJaux%n_0,0:nthr-1) = mpreal(0.d0)
+!$OMP SECTION
+scfJaux%sum_1(1:scfJaux%n_1,0:nthr-1) = mpreal(0.d0)
+!$OMP END SECTIONS
+
+!$OMP DO
+do ij=1,(G_nbas*(G_nbas+1))/2
+   ithr = 0
+!$ ithr = omp_get_thread_num()
+   j = int(sqrt(0.25d0 + 2.d0*(ij-1)) - safe_nbas)
+   i = (ij-1) - (j*(j+1))/2
+   v1 = i + j
+   if(mod(v1,2)==0) then
       val = scfD(i,j)
       if(i/=j) val = val + scfD(j,i)
-      call ints_accumulate(scfJaux%n_0,val,scfJaux%ints(:,ij),scfJaux%sum_0)
-   enddo
+      call accumulate(val,scfJaux%n_0,scfJaux%ints(:,ij),scfJaux%sum_0(:,ithr))
+   else
+      val = scfD(i,j) + scfD(j,i)
+      call accumulate(val,scfJaux%n_1,scfJaux%ints(:,ij),scfJaux%sum_1(:,ithr))
+   endif
+enddo
+!$OMP END DO
+
+!$OMP SECTIONS
+!$OMP SECTION
+do ithr=1,nthr-1
+   call addition(scfJaux%n_0,scfJaux%sum_0(:,ithr),scfJaux%sum_0(:,0))
 enddo
 !$OMP SECTION
-scfJaux%sum_1(1:scfJaux%n_1) = mpreal(0.d0)
-do j=0,G_nbas-1
-   do i=mod(j+1,2),j,2
-      ij = 1 + i + (j*(j+1))/2
-      val = scfD(i,j) + scfD(j,i)
-      call ints_accumulate(scfJaux%n_1,val,scfJaux%ints(:,ij),scfJaux%sum_1)
-   enddo
+do ithr=1,nthr-1
+   call addition(scfJaux%n_1,scfJaux%sum_1(:,ithr),scfJaux%sum_1(:,0))
 enddo
 !$OMP END SECTIONS
 
-!$OMP DO SCHEDULE(DYNAMIC) PRIVATE(i,j,v1,val)
+!$OMP DO SCHEDULE(DYNAMIC)
 do ij=1,(G_nbas*(G_nbas+1))/2
-   j = int(sqrt(0.25d0 + 2.d0*(ij-1)) - safe_half)
+   j = int(sqrt(0.25d0 + 2.d0*(ij-1)) - safe_nbas)
    i = (ij-1) - (j*(j+1))/2
    v1 = i + j
    if(mod(v1,2)==0) then
       v1 = v1/2+1
-      val = ints_product1(v1,scfJaux%prod2H%unit(i,j),scfJaux%sum_0)
+      val = product1_unit(v1,scfJaux%prod2H%unit(i,j),scfJaux%sum_0(:,0))
    else
       v1 = (v1+1)/2
-      val = ints_product1(v1,scfJaux%prod2H%unit(i,j),scfJaux%sum_1)
+      val = product1_unit(v1,scfJaux%prod2H%unit(i,j),scfJaux%sum_1(:,0))
    endif
    val = G_gfac*val
    scfJ(i,j) = val
@@ -178,6 +219,8 @@ enddo
 !$OMP END DO
 
 !$OMP END PARALLEL
+
+if(IPRINT>=2) call timer('use_scfJ',Tcpu,Twall)
 
 end subroutine integrals_scfJ
 
@@ -191,19 +234,23 @@ call prod2H_free(scfJaux%prod2H)
 
 end subroutine free_scfJaux
 
-subroutine integrals_SH(matS_S,matS_T,matH_S,matH_T)
+subroutine integrals_SH(matS_S,matS_T,matH_S,matH_T,IPRINT)
 implicit none
 type(mp_real),intent(out) :: matS_S(:,:),matS_T(:,:)
 type(mp_real),intent(out) :: matH_S(:,:),matH_T(:,:)
+integer,intent(in) :: IPRINT
+real(8) :: Tcpu,Twall
 integer :: n1,n2,iOP,i,j,k,l,ij,kl,ijkl,v1,v2
-real(8) :: safe_half
+real(8) :: safe_nprim
 type(mp_real) :: alpha_invsqrt,a1,a2,a12,c0,c2,c4,val_A,val_B
 type(prod2HData) :: prod2H
 type(table2Data) :: aux,auxOP
 type(mp_real),allocatable :: ints(:,:)
 integer,allocatable :: pair_list(:,:)
 
-safe_half = 0.5d0 - 0.5d0/(G_nprim+1)
+if(IPRINT>=1) call timer('START',Tcpu,Twall)
+
+safe_nprim = 0.5d0 - 0.5d0/(G_nprim+1)
 alpha_invsqrt = 1/sqrt(1 + 4*G_alpha)
 
 n1 = G_nprim
@@ -250,26 +297,26 @@ do iOP=1,2
 
    call table2_fact(auxOP)
 
-!$OMP PARALLEL
+!$OMP PARALLEL PRIVATE(i,j,k,l,ijkl,v1,v2,val_A,val_B)
 
-!$OMP DO SCHEDULE(DYNAMIC) PRIVATE(i,j,v2)
+!$OMP DO SCHEDULE(DYNAMIC)
    do ij=1,((G_nprim+1)*(G_nprim+2))/2
-      j = int(sqrt(0.25d0 + 2.d0*(ij-1)) - safe_half)
+      j = int(sqrt(0.25d0 + 2.d0*(ij-1)) - safe_nprim)
       i = (ij-1) - (j*(j+1))/2
       v2 = i + j
       if(mod(v2,2)==0) then
          v2 = v2/2+1
-         call ints_product2(auxOP%n1_0,v2,auxOP%val_0,prod2H%unit(i,j),&
+         call product2_unit(auxOP%n1_0,auxOP%val_0,v2,prod2H%unit(i,j),&
               ints(:,ij))
       else
          v2 = (v2+1)/2
-         call ints_product2(auxOP%n1_1,v2,auxOP%val_1,prod2H%unit(i,j),&
+         call product2_unit(auxOP%n1_1,auxOP%val_1,v2,prod2H%unit(i,j),&
               ints(:,ij))
       endif
    enddo
 !$OMP END DO
 
-!$OMP DO COLLAPSE(2) SCHEDULE(DYNAMIC) PRIVATE(i,j,k,l,ijkl,v1,v2,val_A,val_B)
+!$OMP DO COLLAPSE(2) SCHEDULE(DYNAMIC)
    do kl=1,G_npair
       do ij=1,G_npair
 
@@ -289,7 +336,7 @@ do iOP=1,2
             endif
             v2 = max(j,l)
             v2 = 1 + min(j,l) + (v2*(v2+1))/2
-            val_A = ints_product1(v1,prod2H%unit(i,k),ints(:,v2))
+            val_A = product1_unit(v1,prod2H%unit(i,k),ints(:,v2))
 
             v1 = i + l
             if(mod(v1,2)==0) then
@@ -299,7 +346,7 @@ do iOP=1,2
             endif
             v2 = max(j,k)
             v2 = 1 + min(j,k) + (v2*(v2+1))/2
-            val_B = ints_product1(v1,prod2H%unit(i,l),ints(:,v2))
+            val_B = product1_unit(v1,prod2H%unit(i,l),ints(:,v2))
 
             select case(iOP)
             case(1)
@@ -338,6 +385,8 @@ deallocate(ints)
 call table2_free(aux)
 call prod2H_free(prod2H)
 
+if(IPRINT>=1) call timer('SH',Tcpu,Twall)
+
 !!$block
 !!$  integer :: idat,ios,i1,i2
 !!$  character(210) :: sval
@@ -366,13 +415,15 @@ call prod2H_free(prod2H)
 
 end subroutine integrals_SH
 
-subroutine integrals_J(matJ_S,matJ_T,matC,parC)
+subroutine integrals_J(matJ_S,matJ_T,matC,parC,IPRINT)
 implicit none
 type(mp_real),intent(out) :: matJ_S(:,:,:,:),matJ_T(:,:,:,:)
 type(mp_real),intent(in) :: matC(:,:)
 integer,intent(in) :: parC(:)
-integer :: n1,n2,nC,iocc,jocc,parCC,i,j,k,l,ij,kl,v1,v2
-real(8) :: safe_half
+integer,intent(in) :: IPRINT
+real(8) :: Tcpu,Twall
+integer :: nthr,ithr,n1,n2,nC,iocc,jocc,parCC,i,j,k,l,ij,kl,v1,v2
+real(8) :: safe_nbas,safe_nprim
 type(mp_real) :: alpha_invsqrt,a1,a2,a12,c0,c2
 type(mp_real) :: val,val_A1,val_A2,val_B1,val_B2,val_A,val_B
 type(prod2HData) :: prod2H
@@ -380,10 +431,13 @@ type(table2Data) :: aux,auxOP
 type(table4Data) :: aux2C
 type(mp_real),allocatable :: ints(:,:)
 integer,allocatable :: pair_list(:,:)
-type(mp_real),allocatable :: CC(:,:),sum_0(:),sum_1(:)
+type(mp_real),allocatable :: CC(:,:),sum_0(:,:),sum_1(:,:)
 type(cont4Data),allocatable :: cont4(:)
 
-safe_half = 0.5d0 - 0.5d0/(G_nprim+1)
+if(IPRINT>=1) call timer('START',Tcpu,Twall)
+
+safe_nbas  = 0.5d0 - 0.5d0/G_nbas
+safe_nprim = 0.5d0 - 0.5d0/(G_nprim+1)
 alpha_invsqrt = 1/sqrt(1 + 3*G_alpha)
 
 n1 = max(G_nprim,G_nbas-1)
@@ -409,16 +463,16 @@ call table2_fact(auxOP)
 
 !$OMP PARALLEL DO SCHEDULE(DYNAMIC) PRIVATE(i,j,v2)
 do ij=1,((G_nprim+1)*(G_nprim+2))/2
-   j = int(sqrt(0.25d0 + 2.d0*(ij-1)) - safe_half)
+   j = int(sqrt(0.25d0 + 2.d0*(ij-1)) - safe_nprim)
    i = (ij-1) - (j*(j+1))/2
    v2 = i + j
    if(mod(v2,2)==0) then
       v2 = v2/2+1
-      call ints_product2(auxOP%n1_0,v2,auxOP%val_0,prod2H%unit(i,j),&
+      call product2_unit(auxOP%n1_0,auxOP%val_0,v2,prod2H%unit(i,j),&
            ints(:,ij))
    else
       v2 = (v2+1)/2
-      call ints_product2(auxOP%n1_1,v2,auxOP%val_1,prod2H%unit(i,j),&
+      call product2_unit(auxOP%n1_1,auxOP%val_1,v2,prod2H%unit(i,j),&
            ints(:,ij))
    endif
 enddo
@@ -426,6 +480,8 @@ enddo
 
 call table2_free(auxOP)
 call table2_free(aux)
+
+if(IPRINT>=1) call timer('prepare_J',Tcpu,Twall)
 
 n1 = 2
 n2 = G_npair
@@ -439,7 +495,12 @@ do while(G_next_pair(i,j))
    pair_list(2,ij) = j
 enddo
 
-allocate(CC(0:G_nbas-1,0:G_nbas-1),sum_0(G_nbas),sum_1(G_nbas))
+allocate(CC(0:G_nbas-1,0:G_nbas-1))
+
+n1 = G_nbas
+n2 = 1
+!$ n2 = omp_get_max_threads()
+allocate(sum_0(n1,0:n2-1),sum_1(n1,0:n2-1))
 
 nC = ((G_nprim+1)*(G_nprim+2))/2
 allocate(cont4(nC))
@@ -459,39 +520,66 @@ enddo
 do jocc=1,G_nocc
    do iocc=1,jocc
 
+      if(IPRINT>=1) call timer('START',Tcpu,Twall)
+
       call outer_vecproduct(G_nbas,matC(:,iocc),matC(:,jocc),CC)
       parCC = mod(parC(iocc)+parC(jocc),2)
 
-!$OMP PARALLEL SECTIONS PRIVATE(v2,val)
+!$OMP PARALLEL PRIVATE(ithr,i,j,ij,v2,val)
+
+!$OMP SINGLE
+      nthr = 1
+!$ nthr = omp_get_num_threads()
+!$OMP END SINGLE
+
+!$OMP SECTIONS
 !$OMP SECTION
-      sum_0(1:G_nbas) = mpreal(0.d0)
-      do j=0,G_nbas-1
-         do i=mod(j,2),j,2
-            v2 = (i+j)/2+1
+      sum_0(1:G_nbas,0:nthr-1) = mpreal(0.d0)      
+!$OMP SECTION
+      sum_1(1:G_nbas,0:nthr-1) = mpreal(0.d0)      
+!$OMP END SECTIONS
+      
+!$OMP DO SCHEDULE(DYNAMIC)
+      do ij=1,(G_nbas*(G_nbas+1))/2
+         ithr = 0
+!$ ithr = omp_get_thread_num()
+         j = int(sqrt(0.25d0 + 2.d0*(ij-1)) - safe_nbas)
+         i = (ij-1) - (j*(j+1))/2
+         v2 = i + j
+         if(mod(v2,2)==0) then
+            v2 = v2/2+1
             val = CC(i,j)
             if(i/=j) val = val + CC(j,i)
-            call prod2H_accumulate(v2,val,prod2H%unit(i,j),sum_0)
-         enddo
+            call accumulate_unit(val,v2,prod2H%unit(i,j),sum_0(:,ithr))
+         else
+            v2 = (v2+1)/2
+            val = CC(i,j) + CC(j,i)
+            call accumulate_unit(val,v2,prod2H%unit(i,j),sum_1(:,ithr))
+         endif
+      enddo
+!$OMP END DO
+
+!$OMP SECTIONS
+!$OMP SECTION
+      do ithr=1,nthr-1
+         call addition(G_nbas,sum_0(:,ithr),sum_0(:,0))
       enddo
 !$OMP SECTION
-      sum_1(1:G_nbas) = mpreal(0.d0)
-      do j=0,G_nbas-1
-         do i=mod(j+1,2),j,2
-            v2 = (i+j+1)/2
-            val = CC(i,j) + CC(j,i)
-            call prod2H_accumulate(v2,val,prod2H%unit(i,j),sum_1)
-         enddo
+      do ithr=1,nthr-1
+         call addition(G_nbas,sum_1(:,ithr),sum_1(:,0))
       enddo
-!$OMP END PARALLEL SECTIONS
+!$OMP END SECTIONS
+
+!$OMP END PARALLEL
 
       n1 = 2*G_nprim + 2*(G_nbas-1)
       n2 = 2*G_nprim
       nC = 2*(G_nbas-1)
-      call aux2C_create(aux2C,n1,n2,nC,sum_0,sum_1)
+      call aux2C_create(aux2C,n1,n2,nC,sum_0(:,0),sum_1(:,0))
 
 !$OMP PARALLEL DO SCHEDULE(DYNAMIC) PRIVATE(i,j,v2)
       do ij=1,((G_nprim+1)*(G_nprim+2))/2
-         j = int(sqrt(0.25d0 + 2.d0*(ij-1)) - safe_half)
+         j = int(sqrt(0.25d0 + 2.d0*(ij-1)) - safe_nprim)
          i = (ij-1) - (j*(j+1))/2
          v2 = i + j
          if(mod(v2,2)==0) then
@@ -501,17 +589,17 @@ do jocc=1,G_nocc
                associate(this => cont4(ij))
                  this%par = 0
                  this%n   = this%n_0
-                 call cont_product2(&
-                      aux2C%se_00,aux2C%val_00,v2,prod2H%unit(i,j),&
-                      this%n,this%val)
+                 call product2_unit_se(&
+                      this%n,aux2C%se_00,aux2C%val_00,v2,prod2H%unit(i,j),&
+                      this%val)
                end associate
             case(1)
                associate(this => cont4(ij))
                  this%par = 1
                  this%n   = this%n_1
-                 call cont_product2(&
-                      aux2C%se_10,aux2C%val_10,v2,prod2H%unit(i,j),&
-                      this%n,this%val)
+                 call product2_unit_se(&
+                      this%n,aux2C%se_10,aux2C%val_10,v2,prod2H%unit(i,j),&
+                      this%val)
                end associate
             end select
          else
@@ -521,17 +609,17 @@ do jocc=1,G_nocc
                associate(this => cont4(ij))
                  this%par = 1
                  this%n   = this%n_1
-                 call cont_product2(&
-                      aux2C%se_11,aux2C%val_11,v2,prod2H%unit(i,j),&
-                      this%n,this%val)
+                 call product2_unit_se(&
+                      this%n,aux2C%se_11,aux2C%val_11,v2,prod2H%unit(i,j),&
+                      this%val)
                end associate
             case(1)
                associate(this => cont4(ij))
                  this%par = 0
                  this%n   = this%n_0
-                 call cont_product2(&
-                      aux2C%se_01,aux2C%val_01,v2,prod2H%unit(i,j),&
-                      this%n,this%val)
+                 call product2_unit_se(&
+                      this%n,aux2C%se_01,aux2C%val_01,v2,prod2H%unit(i,j),&
+                      this%val)
                end associate
             end select
          endif
@@ -556,7 +644,7 @@ do jocc=1,G_nocc
             if(cont4(v1)%par==mod(v2,2)) then
                v2 = max(j,l)
                v2 = 1 + min(j,l) + (v2*(v2+1))/2
-               val_A1 = cont_product1(cont4(v1)%n,cont4(v1)%val,ints(:,v2))
+               val_A1 = product1(cont4(v1)%n,cont4(v1)%val,ints(:,v2))
             else
                val_A1 = 0
             endif
@@ -567,7 +655,7 @@ do jocc=1,G_nocc
             if(cont4(v1)%par==mod(v2,2)) then
                v2 = max(i,k)
                v2 = 1 + min(i,k) + (v2*(v2+1))/2
-               val_A2 = cont_product1(cont4(v1)%n,cont4(v1)%val,ints(:,v2))
+               val_A2 = product1(cont4(v1)%n,cont4(v1)%val,ints(:,v2))
             else
                val_A2 = 0
             endif
@@ -578,7 +666,7 @@ do jocc=1,G_nocc
             if(cont4(v1)%par==mod(v2,2)) then
                v2 = max(j,k)
                v2 = 1 + min(j,k) + (v2*(v2+1))/2
-               val_B1 = cont_product1(cont4(v1)%n,cont4(v1)%val,ints(:,v2))
+               val_B1 = product1(cont4(v1)%n,cont4(v1)%val,ints(:,v2))
             else
                val_B1 = 0
             endif
@@ -589,7 +677,7 @@ do jocc=1,G_nocc
             if(cont4(v1)%par==mod(v2,2)) then
                v2 = max(i,l)
                v2 = 1 + min(i,l) + (v2*(v2+1))/2
-               val_B2 = cont_product1(cont4(v1)%n,cont4(v1)%val,ints(:,v2))
+               val_B2 = product1(cont4(v1)%n,cont4(v1)%val,ints(:,v2))
             else
                val_B2 = 0
             endif
@@ -607,6 +695,8 @@ do jocc=1,G_nocc
       enddo
 !$OMP END PARALLEL DO
 
+      if(IPRINT>=1) call timer('J',Tcpu,Twall)
+
    enddo
 enddo
 
@@ -621,108 +711,45 @@ do j=0,G_nprim
 enddo
 deallocate(cont4)
 
-deallocate(CC,sum_0,sum_1)
-
+deallocate(sum_0,sum_1)
+deallocate(CC)
 deallocate(pair_list)
+
 deallocate(ints)
 call prod2H_free(prod2H)
 
-block
-  integer :: idat,ios,i1,i2,j1,j2
-  character(210) :: sval
-  type(mp_real) :: thr,math,calc,tmp
-  thr = '1.e-26'
-  open(newunit=idat,file='matJT.dat')
-  do
-     read(idat,*,iostat=ios) i1,i2,j1,j2,sval
-     if(ios/=0) exit
-     if(i1<=G_npair.and.i2<=G_npair.and.j1<=G_nocc.and.j2<=G_nocc) then
-        math = mpreal(sval)
-        calc = matJ_T(i1,i2,j1,j2)
-        if(math/=0) then
-           tmp = (calc - math)/math
-        else
-           tmp = calc - math
-        endif
-        if(abs(tmp)>thr) then
-           write(*,'(4i5,a)',advance='no') i1,i2,j1,j2,'   '
-           call mpwrite(6,50,40,tmp)
-        endif
-     endif
-  enddo
-  close(idat)
-end block
+!!$block
+!!$  integer :: idat,ios,i1,i2,j1,j2
+!!$  character(210) :: sval
+!!$  type(mp_real) :: thr,math,calc,tmp
+!!$  thr = '1.e-25'
+!!$  open(newunit=idat,file='matJS.dat')
+!!$  do
+!!$     read(idat,*,iostat=ios) i1,i2,j1,j2,sval
+!!$     if(ios/=0) exit
+!!$     if(i1<=G_npair.and.i2<=G_npair.and.j1<=G_nocc.and.j2<=G_nocc) then
+!!$        math = mpreal(sval)
+!!$        calc = matJ_S(i1,i2,j1,j2)
+!!$        if(math/=0) then
+!!$           tmp = (calc - math)/math
+!!$        else
+!!$           tmp = calc - math
+!!$        endif
+!!$        if(abs(tmp)>thr) then
+!!$           write(*,'(4i5,a)',advance='no') i1,i2,j1,j2,'   '
+!!$           call mpwrite(6,50,40,tmp)
+!!$        endif
+!!$     endif
+!!$  enddo
+!!$  close(idat)
+!!$end block
 
 end subroutine integrals_J
 
-function ints_product1(v1,unit1,ints) result(val)
-implicit none
-type(mp_real) :: val
-integer,intent(in) :: v1
-type(prodUnitData),intent(in) :: unit1
-type(mp_real),intent(in) :: ints(:)
-integer :: off1,i1
+!-------------------------------------------------------------------------------
+!-------------------------------------------------------------------------------
 
-off1 = v1 - unit1%nu
-
-val = unit1%val(1)*ints(off1)
-do i1=1,unit1%nu
-   val = val + unit1%val(1+i1)*ints(off1+i1)
-enddo
-
-end function ints_product1
-
-subroutine ints_product2(n1,v2,aux,unit2,ints)
-implicit none
-integer,intent(in) :: n1,v2
-type(mp_real),intent(in) :: aux(:,:)
-type(prodUnitData),intent(in) :: unit2
-type(mp_real),intent(out) :: ints(:)
-integer :: off2,i1,i2
-
-off2 = v2 - unit2%nu
-
-do i1=1,n1
-   ints(i1) = aux(i1,off2)*unit2%val(1)
-enddo
-do i2=1,unit2%nu
-   do i1=1,n1
-      ints(i1) = ints(i1) + aux(i1,off2+i2)*unit2%val(1+i2)
-   enddo
-enddo
-
-end subroutine ints_product2
-
-subroutine ints_accumulate(n,alpha,ints,acc)
-implicit none
-integer,intent(in) :: n
-type(mp_real),intent(in) :: alpha,ints(:)
-type(mp_real),intent(inout) :: acc(:)
-integer :: i
-
-do i=1,n
-   acc(i) = acc(i) + alpha*ints(i)
-enddo
-
-end subroutine ints_accumulate
-
-subroutine prod2H_accumulate(v,alpha,unit,acc)
-implicit none
-integer,intent(in) :: v
-type(mp_real),intent(in) :: alpha
-type(prodUnitData),intent(in) :: unit
-type(mp_real),intent(inout) :: acc(:)
-integer :: off,i
-
-off = v - unit%nu
-
-do i=0,unit%nu
-   acc(off+i) = acc(off+i) + alpha*unit%val(1+i)
-enddo
-
-end subroutine prod2H_accumulate
-
-function cont_product1(n,vec1,vec2) result(val)
+function product1(n,vec1,vec2) result(val)
 implicit none
 type(mp_real) :: val
 integer,intent(in) :: n
@@ -734,29 +761,114 @@ do i=1,n
    val = val + vec1(i)*vec2(i)
 enddo
 
-end function cont_product1
+end function product1
 
-subroutine cont_product2(se,mat,v,unit,n,cont)
+function product1_unit(v,unit,vec) result(val)
 implicit none
+type(mp_real) :: val
+integer,intent(in) :: v
+type(prodUnitData),intent(in) :: unit
+type(mp_real),intent(in) :: vec(:)
+integer :: off,i
+
+off = v - unit%nu
+
+val = unit%val(1)*vec(off)
+do i=1,unit%nu
+   val = val + unit%val(1+i)*vec(off+i)
+enddo
+
+end function product1_unit
+
+subroutine product2_unit(n,mat,v,unit,vec)
+implicit none
+integer,intent(in) :: n
+type(mp_real),intent(in) :: mat(:,:)
+integer,intent(in) :: v
+type(prodUnitData),intent(in) :: unit
+type(mp_real),intent(out) :: vec(:)
+integer :: off2,i1,i2
+
+off2 = v - unit%nu
+
+do i1=1,n
+   vec(i1) = mat(i1,off2)*unit%val(1)
+enddo
+do i2=1,unit%nu
+   do i1=1,n
+      vec(i1) = vec(i1) + mat(i1,off2+i2)*unit%val(1+i2)
+   enddo
+enddo
+
+end subroutine product2_unit
+
+subroutine product2_unit_se(n,se,mat,v,unit,vec)
+implicit none
+integer,intent(in) :: n
 integer,intent(in) :: se(:,:)
 type(mp_real),intent(in) :: mat(:,:)
 integer,intent(in) :: v
 type(prodUnitData),intent(in) :: unit
-integer,intent(in) :: n
-type(mp_real),intent(out) :: cont(:)
-integer :: off,i1,i2
+type(mp_real),intent(out) :: vec(:)
+integer :: off2,i1,i2
 
-cont(1:n) = mpreal(0.d0)
+vec(1:n) = mpreal(0.d0)
 
-off = v - unit%nu
+off2 = v - unit%nu
 
 do i2=0,unit%nu
-   do i1=se(1,off+i2),se(2,off+i2)
-      cont(i1) = cont(i1) + mat(i1,off+i2)*unit%val(1+i2)
+   do i1=se(1,off2+i2),se(2,off2+i2)
+      vec(i1) = vec(i1) + mat(i1,off2+i2)*unit%val(1+i2)
    enddo
 enddo
 
-end subroutine cont_product2
+end subroutine product2_unit_se
+
+subroutine addition(n,vec,acc)
+implicit none
+integer,intent(in) :: n
+type(mp_real),intent(in) :: vec(:)
+type(mp_real),intent(inout) :: acc(:)
+integer :: i
+
+do i=1,n
+   acc(i) = acc(i) + vec(i)
+enddo
+
+end subroutine addition
+
+subroutine accumulate(alpha,n,vec,acc)
+implicit none
+type(mp_real),intent(in) :: alpha
+integer,intent(in) :: n
+type(mp_real),intent(in) :: vec(:)
+type(mp_real),intent(inout) :: acc(:)
+integer :: i
+
+do i=1,n
+   acc(i) = acc(i) + alpha*vec(i)
+enddo
+
+end subroutine accumulate
+
+subroutine accumulate_unit(alpha,v,unit,acc)
+implicit none
+type(mp_real),intent(in) :: alpha
+integer,intent(in) :: v
+type(prodUnitData),intent(in) :: unit
+type(mp_real),intent(inout) :: acc(:)
+integer :: off,i
+
+off = v - unit%nu
+
+do i=0,unit%nu
+   acc(off+i) = acc(off+i) + alpha*unit%val(1+i)
+enddo
+
+end subroutine accumulate_unit
+
+!-------------------------------------------------------------------------------
+!-------------------------------------------------------------------------------
 
 subroutine aux22_create(aux22,n1,n2)
 implicit none
@@ -1386,6 +1498,9 @@ deallocate(table4%se_00,table4%se_10,table4%se_01,table4%se_11)
 
 end subroutine table4_free
 
+!-------------------------------------------------------------------------------
+!-------------------------------------------------------------------------------
+
 subroutine prod2H_create(prod2H,n1,n2)
 implicit none
 type(prod2HData) :: prod2H
@@ -1464,6 +1579,9 @@ enddo
 deallocate(prod2H%unit)
 
 end subroutine prod2H_free
+
+!-------------------------------------------------------------------------------
+!-------------------------------------------------------------------------------
 
 subroutine outer_vecproduct(n,orb1,orb2,mat,set_clean)
 implicit none
@@ -1544,15 +1662,18 @@ type(mp_real) :: val
 
 ! FDS = ( D^ F )^ S  for F^ = F
 
-!$OMP PARALLEL
+error = 0
+
+!$OMP PARALLEL PRIVATE(val)
 
 !$OMP DO COLLAPSE(2)
 do j=1,n
    do i=1,n
-      work(i,j) = 0
+      val = 0
       do k=1,n
-         work(i,j) = work(i,j) + D(k,i)*F(k,j)
+         val = val + D(k,i)*F(k,j)
       enddo
+      work(i,j) = val
    enddo
 enddo
 !$OMP END DO
@@ -1560,15 +1681,16 @@ enddo
 !$OMP DO COLLAPSE(2)
 do j=1,n
    do i=1,n
-      P(i,j) = 0
+      val = 0
       do k=1,n
-         P(i,j) = P(i,j) + work(k,i)*S(k,j)
+         val = val + work(k,i)*S(k,j)
       enddo
+      P(i,j) = val
    enddo
 enddo
 !$OMP END DO
 
-!$OMP DO SCHEDULE(DYNAMIC) PRIVATE(val)
+!$OMP DO SCHEDULE(DYNAMIC)
 do j=1,n
    do i=1,j-1
       val = P(i,j)
@@ -1579,14 +1701,22 @@ do j=1,n
 enddo
 !$OMP END DO
 
-!$OMP END PARALLEL
+val = 0
 
-error = 0
+!$OMP DO COLLAPSE(2)
 do j=1,n
    do i=1,n
-      error = error + P(i,j)**2
+      val = val + P(i,j)**2
    enddo
 enddo
+!$OMP END DO NOWAIT
+
+!$OMP CRITICAL(FDS_SDF_error)
+error = error + val
+!$OMP END CRITICAL(FDS_SDF_error)
+
+!$OMP END PARALLEL
+
 error = sqrt(error)
 
 end subroutine scf_FDS_SDF

@@ -6,6 +6,7 @@ use eproblem_mp
 use diis
 use integrals
 implicit none
+integer :: IPRINT
 real(8) :: mp_digits
 type(mp_real) :: mp_eps
 integer :: DIIS_size,MAXITER
@@ -32,6 +33,8 @@ type(mp_real),allocatable :: eval_1(:),evec_1(:,:),tmpF_1(:,:),tmpS_1(:,:)
 real(eprec),allocatable :: Eeval_0(:),Eevec_0(:,:),EtmpF_0(:,:),EtmpS_0(:,:)
 real(eprec),allocatable :: Eeval_1(:),Eevec_1(:,:),EtmpF_1(:,:),EtmpS_1(:,:)
 type(mp_real),allocatable :: eval(:),evec(:,:),tmpF(:,:),tmpS(:,:)
+
+IPRINT = 0
 
 G_nocc  = 2
 G_nbas  = 6
@@ -65,8 +68,8 @@ n_1 = G_nbas/2
 allocate(scfS(G_nbas,G_nbas),scfH(G_nbas,G_nbas))
 allocate(scfF(G_nbas,G_nbas),scfD(G_nbas,G_nbas),scfP(G_nbas,G_nbas))
 
-call integrals_scfSH(scfS,scfH)
-call prepare_scfJaux(scfJaux)
+call integrals_scfSH(scfS,scfH,IPRINT)
+call prepare_scfJaux(scfJaux,IPRINT)
 
 allocate(work(G_nbas,G_nbas))
 
@@ -164,7 +167,7 @@ do iter=1,MAXITER
    do i=1,G_nocc
       call outer_vecproduct(G_nbas,matC(:,i),matC(:,i),scfD,(i==1))
    enddo
-   call integrals_scfJ(work,scfD,scfJaux)
+   call integrals_scfJ(work,scfD,scfJaux,IPRINT)
 
    energSCF_prev = energSCF
    energSCF = 0
@@ -201,7 +204,7 @@ call free_DIIS(DIIS)
 do j=1,G_nocc
    do i=1,G_nocc
       call outer_vecproduct(G_nbas,matC(:,i),matC(:,j),scfD)
-      call integrals_scfJ(PPOO(:,:,i,j),scfD,scfJaux)
+      call integrals_scfJ(PPOO(:,:,i,j),scfD,scfJaux,IPRINT)
       call fullMO_transform(G_nbas,matC,PPOO(:,:,i,j),work)
    enddo
 enddo
@@ -273,8 +276,8 @@ allocate(&
      matJ_S(G_npair,G_npair,G_nocc,G_nocc),&
      matJ_T(G_npair,G_npair,G_nocc,G_nocc))
 
-call integrals_SH(matS_S,matS_T,matF_S,matF_T)
-call integrals_J(matJ_S,matJ_T,matC,parC)
+call integrals_SH(matS_S,matS_T,matF_S,matF_T,IPRINT)
+call integrals_J(matJ_S,matJ_T,matC,parC,IPRINT)
 
 !!$block
 !!$  type(mp_real),allocatable :: eval(:),evec(:,:)
