@@ -83,13 +83,6 @@ real(8),intent(out) :: val
 val = dble(val_mp)
 end subroutine mp_to_dble
 
-impure elemental subroutine mp_to_quad(val_mp,val)
-implicit none
-type(mp_real),intent(in) :: val_mp
-real(16),intent(out) :: val
-val = qreal(val_mp)
-end subroutine mp_to_quad
-
 impure elemental subroutine dble_to_mp(val,val_mp)
 implicit none
 real(8),intent(in) :: val
@@ -97,12 +90,41 @@ type(mp_real),intent(out) :: val_mp
 val_mp = mpreald(val)
 end subroutine dble_to_mp
 
+#if defined (mpfr)
+
+impure elemental subroutine mp_to_quad(val_mp,val)
+implicit none
+type(mp_real),intent(in) :: val_mp
+real(16),intent(out) :: val
+write(*,*) 'qudruple precision not implemented in mpfun-mpfr'
+stop
+end subroutine mp_to_quad
+
+impure elemental subroutine quad_to_mp(val,val_mp)
+implicit none
+real(16),intent(in) :: val
+type(mp_real),intent(out) :: val_mp
+write(*,*) 'qudruple precision not implemented in mpfun-mpfr'
+stop
+end subroutine quad_to_mp
+
+#else
+
+impure elemental subroutine mp_to_quad(val_mp,val)
+implicit none
+type(mp_real),intent(in) :: val_mp
+real(16),intent(out) :: val
+val = qreal(val_mp)
+end subroutine mp_to_quad
+
 impure elemental subroutine quad_to_mp(val,val_mp)
 implicit none
 real(16),intent(in) :: val
 type(mp_real),intent(out) :: val_mp
 val_mp = mpreal(val)
 end subroutine quad_to_mp
+
+#endif
 
 subroutine my_mpfform(val,i1,i2,sval)
 implicit none

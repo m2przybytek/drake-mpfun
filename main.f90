@@ -43,18 +43,18 @@ G_npair = G_npair_total()
 G_gfac  = mpreal(2.d0)
 G_alpha = mpreal(1.d0)
 
-mp_digits = (mpwds-1)*mpdpw
+mp_digits = mpwds*mpdpw
 mp_eps = mpreal(10.d0)**mpreald(-mp_digits)
 write(*,*) 'Approximate number of digits: ',mp_digits
 
 DIIS_size = 6
 MAXITER   = 100
-!mp_SCF    = .true.
-mp_SCF    = .false.
+mp_SCF    = .true.
+!mp_SCF    = .false.
 if(mp_SCF) then
-   thr_SCF = mpreald(1.d-32)
+   thr_SCF = mpreal('1.e-32')
 else
-   thr_SCF = mpreal(1.d3*epsilon(0._eprec))
+   call G_real_to_mp(1.d3*epsilon(0._eprec),thr_SCF)
 endif
 
 allocate(orbE(G_nbas),matC(G_nbas,G_nbas),parC(G_nbas))
@@ -279,20 +279,20 @@ allocate(&
 call integrals_SH(matS_S,matS_T,matF_S,matF_T,IPRINT)
 call integrals_J(matJ_S,matJ_T,matC,parC,IPRINT)
 
-!!$block
-!!$  type(mp_real),allocatable :: eval(:),evec(:,:)
-!!$  allocate(eval(G_npair),evec(G_npair,G_npair))
-!!$  allocate(tmpF(G_npair,G_npair),tmpS(G_npair,G_npair))
-!!$  tmpF(:,:) = matF_S
-!!$  tmpS(:,:) = matS_S
-!!$  call symU_diagonalize_mp(mp_eps,G_npair,eval,evec,tmpF,tmpS)
-!!$  call mpwrite(6,60,40,eval(1))
-!!$  tmpS(:,:) = matS_S
-!!$  call symU_diagonalize_mp(mp_eps,G_npair,eval,evec,tmpS)
-!!$  call mpwrite(6,60,40,eval(G_npair)/eval(1))
-!!$  deallocate(tmpF,tmpS)
-!!$  deallocate(eval,evec)
-!!$end block
+block
+  type(mp_real),allocatable :: eval(:),evec(:,:)
+  allocate(eval(G_npair),evec(G_npair,G_npair))
+  allocate(tmpF(G_npair,G_npair),tmpS(G_npair,G_npair))
+  tmpF(:,:) = matF_S
+  tmpS(:,:) = matS_S
+  call symU_diagonalize_mp(mp_eps,G_npair,eval,evec,tmpF,tmpS)
+  call mpwrite(6,60,40,eval(1))
+  tmpS(:,:) = matS_S
+  call symU_diagonalize_mp(mp_eps,G_npair,eval,evec,tmpS)
+  call mpwrite(6,60,40,eval(G_npair)/eval(1))
+  deallocate(tmpF,tmpS)
+  deallocate(eval,evec)
+end block
 
 deallocate(matJ_S,matJ_T)
 deallocate(matF_S,matF_T)
