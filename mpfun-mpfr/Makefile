@@ -1,8 +1,8 @@
-COMPILER = /home/mitek/programy/gcc-7.2.0/install
+COMPILER = $(HOME)/programy/gcc-7.2.0/install
 FC       = $(COMPILER)/bin/gfortran
 CC       = $(COMPILER)/bin/gcc
 FFLAGS   = -O3 -fno-underscoring
-CFLAGS   = -I/home/mitek/programy/mpfr-libs/install/include
+#CFLAGS   = -I$(HOME)/programy/mpfr-libs/install/include
 
 NAME = libmpfun.a
 
