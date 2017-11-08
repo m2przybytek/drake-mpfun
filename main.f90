@@ -332,6 +332,7 @@ call integrals_vecP(vecP,matC,parC,IPRINT)
   tmpS(:,:) = matS_S
   call symU_diagonalize_mp(mp_eps,G_npair,eval,evec,tmpF,tmpS)
   call mpwrite(6,60,40,eval(1))
+  tmpS(:,:) = matS_S
   call symU_diagonalize_mp(mp_eps,G_npair,eval,evec,tmpS)
   call mpwrite(6,60,40,eval(G_npair)/eval(1))
 
@@ -341,6 +342,7 @@ call integrals_vecP(vecP,matC,parC,IPRINT)
   tmpS(1:G_npair_shrink,1:G_npair_shrink) = matS_T(list_shrink,list_shrink)
   call symU_diagonalize_mp(mp_eps,G_npair_shrink,eval,evec,tmpF,tmpS)
   call mpwrite(6,60,40,eval(1))
+  tmpS(1:G_npair_shrink,1:G_npair_shrink) = matS_T(list_shrink,list_shrink)
   call symU_diagonalize_mp(mp_eps,G_npair_shrink,eval,evec,tmpS)
   call mpwrite(6,60,40,eval(G_npair_shrink)/eval(1))
 
