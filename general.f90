@@ -5,7 +5,7 @@ implicit none
 integer,save :: G_nocc
 integer,save :: G_nbas
 integer,save :: G_nprim
-integer,save :: G_npair
+integer,save :: G_npair,G_npair_shrink
 type(mp_real),save :: G_gfac
 type(mp_real),save :: G_alpha
 
@@ -22,20 +22,25 @@ private dble_to_mp,quad_to_mp
 
 contains
 
-function G_npair_total() result(cnt)
+subroutine G_set_npair
 implicit none
-integer :: cnt
+integer :: cnt,cnt_shrink
 integer :: i,j
 
 i = -1
 j = -1
 
 cnt = 0
+cnt_shrink = 0
 do while(G_next_pair(i,j))
    cnt = cnt + 1
+   if(i/=j) cnt_shrink = cnt_shrink + 1
 enddo
 
-end function G_npair_total
+G_npair = cnt
+G_npair_shrink = cnt_shrink
+
+end subroutine G_set_npair
 
 function G_next_pair(i,j) result(not_last)
 implicit none

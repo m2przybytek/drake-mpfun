@@ -26,6 +26,7 @@ type(DIISData) :: DIIS
 type(mp_real),allocatable :: matS_S(:,:),matS_T(:,:)
 type(mp_real),allocatable :: matF_S(:,:),matF_T(:,:)
 type(mp_real),allocatable :: matJ_S(:,:,:,:),matJ_T(:,:,:,:)
+type(mp_real),allocatable :: vec0(:,:,:),vec1(:,:,:),vecP(:,:,:)
 type(mp_real) :: val
 type(mp_real),allocatable :: work(:,:)
 type(mp_real),allocatable :: eval_0(:),evec_0(:,:),tmpF_0(:,:),tmpS_0(:,:)
@@ -33,13 +34,14 @@ type(mp_real),allocatable :: eval_1(:),evec_1(:,:),tmpF_1(:,:),tmpS_1(:,:)
 real(eprec),allocatable :: Eeval_0(:),Eevec_0(:,:),EtmpF_0(:,:),EtmpS_0(:,:)
 real(eprec),allocatable :: Eeval_1(:),Eevec_1(:,:),EtmpF_1(:,:),EtmpS_1(:,:)
 type(mp_real),allocatable :: eval(:),evec(:,:),tmpF(:,:),tmpS(:,:)
+integer,allocatable :: list_shrink(:)
 
 IPRINT = 0
 
 G_nocc  = 2
 G_nbas  = 6
 G_nprim = 10
-G_npair = G_npair_total()
+call G_set_npair
 G_gfac  = mpreal(2.d0)
 G_alpha = mpreal(1.d0)
 
@@ -225,6 +227,14 @@ call my_mpfform(energSCF_prev,50,40,sval)
 write(*,'(2a)') '     check: ',trim(sval)
 
 write(*,*)
+write(*,'(a)') 'Orbital energies'
+do i=1,G_nocc
+   call my_mpfform(orbE(i),50,40,sval)
+   write(*,'(i5,a)') i,trim(sval)
+enddo
+
+write(*,*)
+write(*,'(a)') 'Pair energies (standard)'
 energMP2 = 0
 do j=1,G_nocc
    do i=1,G_nocc
@@ -275,25 +285,70 @@ allocate(matF_S(G_npair,G_npair),matF_T(G_npair,G_npair))
 allocate(&
      matJ_S(G_npair,G_npair,G_nocc,G_nocc),&
      matJ_T(G_npair,G_npair,G_nocc,G_nocc))
+allocate(&
+     vec0(G_npair,G_nocc,G_nocc),&
+     vec1(G_npair,G_nocc,G_nocc),&
+     vecP(G_npair,G_nocc,G_nocc))
 
 call integrals_SH(matS_S,matS_T,matF_S,matF_T,IPRINT)
 call integrals_J(matJ_S,matJ_T,matC,parC,IPRINT)
+do k=1,G_nocc
+   do j=1,G_npair
+      do i=1,G_npair
+         matF_S(i,j) = matF_S(i,j) + matJ_S(i,j,k,k)
+      enddo
+   enddo
+enddo
+do k=1,G_nocc
+   do j=1,G_npair
+      do i=1,G_npair
+         matF_T(i,j) = matF_T(i,j) + matJ_T(i,j,k,k)
+      enddo
+   enddo
+enddo
 
-block
-  type(mp_real),allocatable :: eval(:),evec(:,:)
+call integrals_vec0(vec0,matC,parC,IPRINT)
+vec1(:,:,:) = mpreal(0.d0)
+call integrals_vecP(vecP,matC,parC,IPRINT)
+
+  allocate(list_shrink(G_npair_shrink))
+  i = -1
+  j = -1
+  k = 0
+  l = 0
+  do while(G_next_pair(i,j))
+     k = k + 1
+     if(i/=j) then
+        l = l + 1
+        list_shrink(l) = k
+     endif
+  enddo
   allocate(eval(G_npair),evec(G_npair,G_npair))
   allocate(tmpF(G_npair,G_npair),tmpS(G_npair,G_npair))
+
+  write(*,*)
+  write(*,'(a)') 'Problem S: energia H_S+J_S, stosunek wartosci wlasnych S_S'
   tmpF(:,:) = matF_S
   tmpS(:,:) = matS_S
   call symU_diagonalize_mp(mp_eps,G_npair,eval,evec,tmpF,tmpS)
   call mpwrite(6,60,40,eval(1))
-  tmpS(:,:) = matS_S
   call symU_diagonalize_mp(mp_eps,G_npair,eval,evec,tmpS)
   call mpwrite(6,60,40,eval(G_npair)/eval(1))
+
+  write(*,*)
+  write(*,'(a)') 'Problem S: energia H_T+J_T, stosunek wartosci wlasnych S_T'
+  tmpF(1:G_npair_shrink,1:G_npair_shrink) = matF_T(list_shrink,list_shrink)
+  tmpS(1:G_npair_shrink,1:G_npair_shrink) = matS_T(list_shrink,list_shrink)
+  call symU_diagonalize_mp(mp_eps,G_npair_shrink,eval,evec,tmpF,tmpS)
+  call mpwrite(6,60,40,eval(1))
+  call symU_diagonalize_mp(mp_eps,G_npair_shrink,eval,evec,tmpS)
+  call mpwrite(6,60,40,eval(G_npair_shrink)/eval(1))
+
   deallocate(tmpF,tmpS)
   deallocate(eval,evec)
-end block
+  deallocate(list_shrink)
 
+deallocate(vec0,vec1,vecP)
 deallocate(matJ_S,matJ_T)
 deallocate(matF_S,matF_T)
 deallocate(matS_S,matS_T)
