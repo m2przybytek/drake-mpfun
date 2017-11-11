@@ -20,7 +20,29 @@ end interface G_real_to_mp
 private mp_to_dble,mp_to_quad
 private dble_to_mp,quad_to_mp
 
+type CCpairData
+type(mp_real) :: mult
+type(mp_real),allocatable :: vec(:)
+type(mp_real),allocatable :: tau(:)
+end type CCpairData
+
 contains
+
+subroutine init_CCpair(CCpair)
+implicit none
+type(CCpairData) :: CCpair
+
+allocate(CCpair%vec(G_npair),CCpair%tau(G_npair))
+
+end subroutine init_CCpair
+
+subroutine free_CCpair(CCpair)
+implicit none
+type(CCpairData) :: CCpair
+
+deallocate(CCpair%vec,CCpair%tau)
+
+end subroutine free_CCpair
 
 subroutine G_set_npair
 implicit none

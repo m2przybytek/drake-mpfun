@@ -3,6 +3,7 @@ use mpmodule
 use general
 use eproblem_real
 use eproblem_mp
+use lproblem_mp
 use diis
 use integrals
 implicit none
@@ -12,7 +13,7 @@ type(mp_real) :: mp_eps
 integer :: DIIS_size,MAXITER
 logical :: mp_SCF
 type(mp_real) :: thr_SCF
-integer :: n_0,n_1,iter,i,j,k,l
+integer :: n_0,n_1,iter,i,j,k,l,m
 character(50) :: sval
 type(mp_real) :: energSCF,energSCF_prev,energSCF_diff,error
 type(mp_real) :: energMP2
@@ -27,12 +28,14 @@ type(mp_real),allocatable :: matS_S(:,:),matS_T(:,:)
 type(mp_real),allocatable :: matF_S(:,:),matF_T(:,:)
 type(mp_real),allocatable :: matJ_S(:,:,:,:),matJ_T(:,:,:,:)
 type(mp_real),allocatable :: vec0(:,:,:),vec1(:,:,:),vecP(:,:,:)
+type(CCpairData),allocatable :: CCpairs(:,:)
 type(mp_real) :: val
 type(mp_real),allocatable :: work(:,:)
 type(mp_real),allocatable :: eval_0(:),evec_0(:,:),tmpF_0(:,:),tmpS_0(:,:)
 type(mp_real),allocatable :: eval_1(:),evec_1(:,:),tmpF_1(:,:),tmpS_1(:,:)
 real(eprec),allocatable :: Eeval_0(:),Eevec_0(:,:),EtmpF_0(:,:),EtmpS_0(:,:)
 real(eprec),allocatable :: Eeval_1(:),Eevec_1(:,:),EtmpF_1(:,:),EtmpS_1(:,:)
+type(mp_real),allocatable :: LHS(:,:),RHS(:)
 type(mp_real),allocatable :: eval(:),evec(:,:),tmpF(:,:),tmpS(:,:)
 integer,allocatable :: list_shrink(:)
 
@@ -280,6 +283,9 @@ deallocate(scfS,scfH)
 
 !-------------------------------------------------------------------------------
 
+write(*,*)
+write(*,'(a)') 'stage 0'
+
 allocate(matS_S(G_npair,G_npair),matS_T(G_npair,G_npair))
 allocate(matF_S(G_npair,G_npair),matF_T(G_npair,G_npair))
 allocate(&
@@ -292,6 +298,11 @@ allocate(&
 
 call integrals_SH(matS_S,matS_T,matF_S,matF_T,IPRINT)
 call integrals_J(matJ_S,matJ_T,matC,parC,IPRINT)
+
+call integrals_vec0(vec0,matC,parC,IPRINT)
+vec1(:,:,:) = mpreal(0.d0)
+call integrals_vecP(vecP,matC,parC,IPRINT)
+
 do k=1,G_nocc
    do j=1,G_npair
       do i=1,G_npair
@@ -307,48 +318,158 @@ do k=1,G_nocc
    enddo
 enddo
 
-call integrals_vec0(vec0,matC,parC,IPRINT)
-vec1(:,:,:) = mpreal(0.d0)
-call integrals_vecP(vecP,matC,parC,IPRINT)
+allocate(CCpairs(G_nocc,G_nocc))
+do j=1,G_nocc
+   do i=1,G_nocc
+      associate(CCpair => CCpairs(i,j))
 
-  allocate(list_shrink(G_npair_shrink))
-  i = -1
-  j = -1
-  k = 0
-  l = 0
-  do while(G_next_pair(i,j))
-     k = k + 1
-     if(i/=j) then
-        l = l + 1
-        list_shrink(l) = k
-     endif
-  enddo
-  allocate(eval(G_npair),evec(G_npair,G_npair))
-  allocate(tmpF(G_npair,G_npair),tmpS(G_npair,G_npair))
+        call init_CCpair(CCpair)
 
-  write(*,*)
-  write(*,'(a)') 'Problem S: energia H_S+J_S, stosunek wartosci wlasnych S_S'
-  tmpF(:,:) = matF_S
-  tmpS(:,:) = matS_S
-  call symU_diagonalize_mp(mp_eps,G_npair,eval,evec,tmpF,tmpS)
-  call mpwrite(6,60,40,eval(1))
-  tmpS(:,:) = matS_S
-  call symU_diagonalize_mp(mp_eps,G_npair,eval,evec,tmpS)
-  call mpwrite(6,60,40,eval(G_npair)/eval(1))
+        if(i>=j) then
 
-  write(*,*)
-  write(*,'(a)') 'Problem S: energia H_T+J_T, stosunek wartosci wlasnych S_T'
-  tmpF(1:G_npair_shrink,1:G_npair_shrink) = matF_T(list_shrink,list_shrink)
-  tmpS(1:G_npair_shrink,1:G_npair_shrink) = matS_T(list_shrink,list_shrink)
-  call symU_diagonalize_mp(mp_eps,G_npair_shrink,eval,evec,tmpF,tmpS)
-  call mpwrite(6,60,40,eval(1))
-  tmpS(1:G_npair_shrink,1:G_npair_shrink) = matS_T(list_shrink,list_shrink)
-  call symU_diagonalize_mp(mp_eps,G_npair_shrink,eval,evec,tmpS)
-  call mpwrite(6,60,40,eval(G_npair_shrink)/eval(1))
+           if(i==j) then
+              CCpair%mult = mpreal(-0.5d0)
+           else
+              CCpair%mult = mpreal(-1.d0)
+           endif
 
-  deallocate(tmpF,tmpS)
-  deallocate(eval,evec)
-  deallocate(list_shrink)
+           do m=1,G_npair
+              CCpair%vec(m) = &
+                   - (vec1(m,i,j) + vec1(m,j,i))
+           enddo
+           do m=1,G_npair
+              CCpair%vec(m) = CCpair%vec(m) &
+                   + (vecP(m,i,j) + vecP(m,j,i))
+           enddo
+           do l=1,G_nocc
+              do k=1,G_nocc
+                 val = PPOO(k,l,i,j) + PPOO(k,l,j,i)
+                 do m=1,G_npair
+                    CCpair%vec(m) = CCpair%vec(m) &
+                         - vec0(m,k,l)*val
+                 enddo
+              enddo
+           enddo
+
+        else
+
+           CCpair%mult = mpreal(-3.d0)
+
+           do m=1,G_npair
+              CCpair%vec(m) = &
+                   - (vec1(m,i,j) - vec1(m,j,i))
+           enddo
+           do m=1,G_npair
+              CCpair%vec(m) = CCpair%vec(m) &
+                   + (vecP(m,i,j) - vecP(m,j,i))
+           enddo
+           do l=1,G_nocc
+              do k=1,G_nocc
+                 val = PPOO(k,l,i,j) - PPOO(k,l,j,i)
+                 do m=1,G_npair
+                    CCpair%vec(m) = CCpair%vec(m) &
+                         - vec0(m,k,l)*val
+                 enddo
+              enddo
+           enddo
+
+        endif
+
+      end associate
+   enddo
+enddo
+
+allocate(list_shrink(G_npair_shrink))
+i = -1
+j = -1
+k = 0
+l = 0
+do while(G_next_pair(i,j))
+   k = k + 1
+   if(i/=j) then
+      l = l + 1
+      list_shrink(l) = k
+   endif
+enddo
+
+allocate(LHS(G_npair,G_npair),RHS(G_npair))
+do j=1,G_nocc
+   do i=1,G_nocc
+      associate(CCpair => CCpairs(i,j))
+
+        if(i>=j) then
+
+           val = orbE(i) + orbE(j)
+           do l=1,G_npair
+              do k=1,G_npair
+                 LHS(k,l) = matF_S(k,l) - val*matS_S(k,l)
+              enddo
+           enddo
+           do m=1,G_npair
+              RHS(m) = CCpair%vec(m)
+           enddo
+           call symU_linearsolve_mp(G_npair,LHS,RHS)
+           do m=1,G_npair
+              CCpair%tau(m) = RHS(m)
+           enddo
+
+           val = 0
+           do m=1,G_npair
+              val = val + CCpair%vec(m)*CCpair%tau(m)
+           enddo
+           val = CCpair%mult*val
+           call my_mpfform(val,50,40,sval)
+           write(*,'(2i5,a)') i,j,trim(sval)
+
+        else
+
+           val = orbE(i) + orbE(j)
+           do l=1,G_npair
+              do k=1,G_npair
+                 LHS(k,l) = matF_T(k,l) - val*matS_T(k,l)
+              enddo
+           enddo
+
+        endif
+        
+      end associate
+   enddo
+enddo
+deallocate(LHS,RHS)
+
+allocate(eval(G_npair),evec(G_npair,G_npair))
+allocate(tmpF(G_npair,G_npair),tmpS(G_npair,G_npair))
+write(*,*)
+write(*,'(a)') 'Problem S: energia H_S+J_S, stosunek wartosci wlasnych S_S'
+tmpF(:,:) = matF_S
+tmpS(:,:) = matS_S
+call symU_diagonalize_mp(mp_eps,G_npair,eval,evec,tmpF,tmpS)
+call mpwrite(6,60,40,eval(1))
+tmpS(:,:) = matS_S
+call symU_diagonalize_mp(mp_eps,G_npair,eval,evec,tmpS)
+call mpwrite(6,60,40,eval(G_npair)/eval(1))
+write(*,*)
+write(*,'(a)') 'Problem S: energia H_T+J_T, stosunek wartosci wlasnych S_T'
+tmpF(1:G_npair_shrink,1:G_npair_shrink) = matF_T(list_shrink,list_shrink)
+tmpS(1:G_npair_shrink,1:G_npair_shrink) = matS_T(list_shrink,list_shrink)
+call symU_diagonalize_mp(mp_eps,G_npair_shrink,eval,evec,tmpF,tmpS)
+call mpwrite(6,60,40,eval(1))
+tmpS(1:G_npair_shrink,1:G_npair_shrink) = matS_T(list_shrink,list_shrink)
+call symU_diagonalize_mp(mp_eps,G_npair_shrink,eval,evec,tmpS)
+call mpwrite(6,60,40,eval(G_npair_shrink)/eval(1))
+deallocate(tmpF,tmpS)
+deallocate(eval,evec)
+
+deallocate(list_shrink)
+
+do j=1,G_nocc
+   do i=1,G_nocc
+      associate(CCpair => CCpairs(i,j))
+        call free_CCpair(CCpair)
+      end associate
+   enddo
+enddo
+deallocate(CCpairs)
 
 deallocate(vec0,vec1,vecP)
 deallocate(matJ_S,matJ_T)
