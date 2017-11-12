@@ -413,25 +413,20 @@ do j=1,G_nocc
               CCpair%tau(m) = RHS(m)
            enddo
 
-           val = 0
-           do m=1,G_npair
-              val = val + CCpair%vec(m)*CCpair%tau(m)
-           enddo
-           val = CCpair%mult*val
-           call my_mpfform(val,50,40,sval)
-           write(*,'(2i5,a)') i,j,trim(sval)
-
         else
 
-           val = orbE(i) + orbE(j)
-           do l=1,G_npair
-              do k=1,G_npair
-                 LHS(k,l) = matF_T(k,l) - val*matS_T(k,l)
-              enddo
-           enddo
+           CCpair%tau = mpreal(0.d0)
 
         endif
-        
+
+        val = 0
+        do m=1,G_npair
+           val = val + CCpair%vec(m)*CCpair%tau(m)
+        enddo
+        val = CCpair%mult*val
+        call my_mpfform(val,50,40,sval)
+        write(*,'(2i5,a)') i,j,trim(sval)
+
       end associate
    enddo
 enddo

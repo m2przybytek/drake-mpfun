@@ -7,10 +7,11 @@ public symU_linearsolve_mp
 
 contains
 
-subroutine symU_linearsolve_mp(n,A,x)
+subroutine symU_linearsolve_mp(n,A,b)
 implicit none
 integer,intent(in) :: n
-type(mp_real),intent(inout) :: A(:,:),x(:)
+type(mp_real),intent(inout) :: A(:,:),b(:)
+integer,allocatable :: perm(:)
 
 if(n<0) then
 
@@ -24,70 +25,138 @@ elseif(n==0) then
 
 elseif(n==1) then
 
-   x(1) = x(1)/A(1,1)
+   b(1) = b(1)/A(1,1)
 
 else
 
-   call cholesky_factor(n,A)
-   call cholesky_solve(n,A,x)
+   allocate(perm(n))
+
+   call LDL_factor(n,A,perm)
+   call LDL_solve(n,A,perm,b)
+
+   deallocate(perm)
 
 endif
 
 end subroutine symU_linearsolve_mp
 
-subroutine cholesky_factor(n,A)
+subroutine LDL_factor(n,A,perm)
 implicit none
 integer,intent(in) :: n
 type(mp_real),intent(inout) :: A(:,:)
-integer :: i,j,k
-type(mp_real) :: rtmp
+integer,intent(out) :: perm(:)
+integer :: i,j,k,k_max
+type(mp_real) :: D,rtmp
+logical :: do_warn
 
-do j=1,n
-   do i=1,j-1
-      rtmp = A(i,j)
-      do k=1,i-1
-         rtmp = rtmp - A(k,i)*A(k,j)
-      enddo
-      A(i,j) = rtmp*A(i,i)
-   enddo
-   rtmp = A(j,j)
-   do k=1,j-1
-      rtmp = rtmp - A(k,j)**2
-   enddo
-   if(rtmp<0) then
-      write(*,'(a)') &
-           'Matrix in linear equations solver is not positive definite!'
-      stop
-   endif
-   A(j,j) = 1/sqrt(rtmp)
+do i=1,n
+   perm(i) = i
 enddo
 
-end subroutine cholesky_factor
+do_warn = .true.
+do k=n,1,-1
 
-subroutine cholesky_solve(n,A,x)
+   rtmp  = abs(A(k,k))
+   k_max = k
+   do i=1,k-1
+      if(abs(A(i,i))>rtmp) then
+         rtmp  = abs(A(i,i))
+         k_max = i
+      endif
+   enddo
+   if(A(k_max,k_max)<=0.and.do_warn) then
+      write(*,'(a)') 'WARNING!!! &
+           &Matrix in linear solver is not positive definite!'
+      do_warn = .false.
+   endif
+
+   call exchange(n,A,perm,k_max,k)
+
+   D = 1/A(k,k)
+
+   do j=1,k-1
+      rtmp   = A(j,k)
+      A(j,k) = A(j,k)*D
+      do i=1,j
+         A(i,j) = A(i,j) - A(i,k)*rtmp
+      enddo
+   enddo
+
+   A(k,k) = D
+
+enddo
+
+end subroutine LDL_factor
+
+subroutine LDL_solve(n,A,perm,x)
 implicit none
 integer,intent(in) :: n
 type(mp_real),intent(in) :: A(:,:)
+integer,intent(in) :: perm(:)
 type(mp_real),intent(inout) :: x(:)
 integer :: i,j
-type(mp_real) :: rtmp
-
-do j=1,n
-   rtmp = x(j)
-   do i=1,j-1
-      rtmp = rtmp - A(i,j)*x(i)
-   enddo
-   x(j) = rtmp*A(j,j)
-enddo
+type(mp_real) :: tmp
 
 do j=n,1,-1
-   rtmp = x(j)*A(j,j)
+   tmp = x(perm(j))
    do i=1,j-1
-      x(i) = x(i) - rtmp*A(i,j)
+      x(perm(i)) = x(perm(i)) - A(i,j)*tmp
    enddo
-   x(j) = rtmp
+   x(perm(j)) = A(j,j)*tmp
 enddo
 
-end subroutine cholesky_solve
+do j=2,n
+   tmp = x(perm(j))
+   do i=1,j-1
+      tmp = tmp - x(perm(i))*A(i,j)
+   enddo
+   x(perm(j)) = tmp
+enddo
+
+end subroutine LDL_solve
+
+subroutine exchange(n,A,perm,j1_IN,j2_IN)
+implicit none
+integer,intent(in) :: n
+type(mp_real),intent(inout) :: A(:,:)
+integer,intent(inout) :: perm(:)
+integer,intent(in) :: j1_IN,j2_IN
+integer :: j1,j2
+integer :: i
+type(mp_real) :: rtmp
+integer :: itmp
+
+if(j1_IN/=j2_IN) then
+
+   j1 = min(j1_IN,j2_IN)
+   j2 = max(j1_IN,j2_IN)
+
+   rtmp     = A(j1,j1)
+   A(j1,j1) = A(j2,j2)
+   A(j2,j2) = rtmp
+
+   do i=1,j1-1
+      rtmp    = A(i,j1)
+      A(i,j1) = A(i,j2)
+      A(i,j2) = rtmp
+   enddo
+   do i=j1+1,j2-1
+      rtmp    = A(j1,i)
+      A(j1,i) = A(i,j2)
+      A(i,j2) = rtmp
+   enddo
+   do i=j2+1,n
+      rtmp    = A(j1,i)
+      A(j1,i) = A(j2,i)
+      A(j2,i) = rtmp
+   enddo
+
+   itmp     = perm(j1)
+   perm(j1) = perm(j2)
+   perm(j2) = itmp
+
+endif
+
+end subroutine exchange
 
 end module lproblem_mp
