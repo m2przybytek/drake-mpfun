@@ -1,6 +1,7 @@
 program testy
 use mpmodule
 use general
+use inputread
 use eproblem_real
 use eproblem_mp
 use lproblem_mp
@@ -41,12 +42,15 @@ integer,allocatable :: list_shrink(:)
 
 IPRINT = 0
 
-G_nocc  = 2
-G_nbas  = 6
-G_nprim = 10
+! G_nocc  = 1
+! G_nbas  = 100
+! G_nprim = 50
+! call G_set_npair
+! G_gfac  = mpreal(2.d0)
+! G_alpha = mpreal(1.d0)
+
+call read_Input()
 call G_set_npair
-G_gfac  = mpreal(2.d0)
-G_alpha = mpreal(1.d0)
 
 mp_digits = mpwds*mpdpw
 mp_eps = mpreal(10.d0)**mpreald(-mp_digits)

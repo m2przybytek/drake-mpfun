@@ -19,7 +19,7 @@ $(error MPFUNTYPE not defined, possible values: fort,mpfr)
 endif
 
 NAME = test
-OBJ  = main.o integrals.o diis.o eproblem_mp.o eproblem_real.o time.o general.o
+OBJ  = main.o integrals.o diis.o lproblem_mp.o eproblem_mp.o eproblem_real.o time.o inputread.o general.o
 
 $(NAME) : $(OBJ)
 	$(FC) -o $@ $^ $(LFLAGS) $(OPENMP) $(MPFUNLIB)
@@ -32,5 +32,5 @@ $(NAME) : $(OBJ)
 clean :
 	rm *.o *.mod $(NAME)
 
-main.o      : integrals.o diis.o eproblem_mp.o eproblem_real.o general.o
+main.o      : integrals.o diis.o lproblem_mp.o eproblem_mp.o eproblem_real.o inputread.o general.o
 integrals.o : time.o general.o
