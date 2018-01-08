@@ -29,6 +29,7 @@ type(mp_real),allocatable :: matS_S(:,:),matS_T(:,:)
 type(mp_real),allocatable :: matF_S(:,:),matF_T(:,:)
 type(mp_real),allocatable :: matJ_S(:,:,:,:),matJ_T(:,:,:,:)
 type(mp_real),allocatable :: vec0(:,:,:),vec1(:,:,:),vecP(:,:,:)
+type(mp_real),allocatable :: basicF12(:)
 type(CCpairData),allocatable :: CCpairs(:,:)
 type(mp_real) :: val
 type(mp_real),allocatable :: work(:,:)
@@ -299,13 +300,19 @@ allocate(&
      vec0(G_npair,G_nocc,G_nocc),&
      vec1(G_npair,G_nocc,G_nocc),&
      vecP(G_npair,G_nocc,G_nocc))
+allocate(basicF12(0:G_naux))
+
+call integrals_f12(basicF12,IPRINT)
 
 call integrals_SH(matS_S,matS_T,matF_S,matF_T,IPRINT)
 call integrals_J(matJ_S,matJ_T,matC,parC,IPRINT)
 
-call integrals_vec0(vec0,matC,parC,IPRINT)
+call integrals_vec0(vec0,matC,parC,basicF12,IPRINT)
 vec1(:,:,:) = mpreal(0.d0)
+
 call integrals_vecP(vecP,matC,parC,IPRINT)
+
+call integrals_matP(IPRINT)
 
 do k=1,G_nocc
    do j=1,G_npair
@@ -470,6 +477,7 @@ do j=1,G_nocc
 enddo
 deallocate(CCpairs)
 
+deallocate(basicF12)
 deallocate(vec0,vec1,vecP)
 deallocate(matJ_S,matJ_T)
 deallocate(matF_S,matF_T)

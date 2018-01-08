@@ -5,6 +5,7 @@ implicit none
 integer,save :: G_nocc
 integer,save :: G_nbas
 integer,save :: G_nprim
+integer,save :: G_naux
 integer,save :: G_npair,G_npair_shrink
 type(mp_real),save :: G_gfac
 type(mp_real),save :: G_alpha

@@ -12,7 +12,7 @@ MPFUNLIB  = -Lmpfun-$(MPFUNTYPE) -lmpfun
 
 ifeq ($(MPFUNTYPE),fort)
 else ifeq ($(MPFUNTYPE),mpfr)
-#MPFUNLIB += /home/mitek/programy/mpfr-libs/install/lib/libmpfr.a /home/mitek/programy/mpfr-libs/install/lib/libgmp.a
+#MPFUNLIB += /home/mitek/programy/mpfr-libs/install/lib/libmpfr.a /home/mitek/programy/mpfr-libs/install/lib/libgmp.+a
 MPFUNLIB += -lmpfr
 else
 $(error MPFUNTYPE not defined, possible values: fort,mpfr)

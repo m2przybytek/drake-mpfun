@@ -12,6 +12,7 @@ contains
     read(10,*) G_nocc
     read(10,*) G_nbas
     read(10,*) G_nprim
+    read(10,*) G_naux
     read(10,*) pre_g
     read(10,*) pre_a
     G_gfac = mpreal(pre_g)
@@ -23,6 +24,7 @@ contains
     write(*,'(A11,F15.2,A32)') " | g     = ",pre_g, "|"
     write(*,'(A11,I15,A32)') "| nbas  = ",G_nbas,"|"
     write(*,'(A11,I15,A32)') "| nocc  = ",G_nocc,"|"
+    write(*,'(A11,I15,A32)') "| naux  = ",G_naux,"|"
     write(*,'(A11,I15,A32)') "| nprim = ",G_nprim,"|"
     write(*,'(A11,F15.2,A32)') "| alpha = ",pre_a,"|"
     write(*,*) "---------------------------------------------------------"
