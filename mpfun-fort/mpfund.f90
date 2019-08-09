@@ -3,7 +3,7 @@
 !  MPFUN-Fort: A thread-safe arbitrary precision computation package
 !  Transcendental function module (module MPFUND)
 
-!  Revision date:  19 Apr 2017
+!  Revision date:  19 July 2018
 
 !  AUTHOR:
 !     David H. Bailey
@@ -1101,10 +1101,11 @@ subroutine mpcssnr (a, x, y, mpnw)
 
 !   Sin (s) =  s - s^3 / 3! + s^5 / 5! - s^7 / 7! ...
 
-!   where the argument S has been reduced to the closest quadrant.  To further
-!   accelerate the series, the reduced argument is divided by 2^NQ.  After
-!   convergence of the series, the double-angle formulas for cos and sin are
-!   applied NQ times.  NQ = 2 by default.
+!   where the argument S has been reduced to (-pi, pi).  To further
+!   accelerate the series, the reduced argument is divided by 2^NQ, where NQ
+!   is computed as int (sqrt (0.5d0 * N)), where N is the precision in bits.
+!   After convergence of the series, the double-angle formulas for cos are
+!   applied NQ times.
 
 !   If the precision level MPNW exceeds MPNWX, this subroutine calls
 !   MPCSSNX instead.  By default, mpnwx = 100000 (approx. 1450000 digits).
@@ -1197,26 +1198,12 @@ endif
 call mpmuld (mppicon, 2.d0, s0, mpnw1)
 call mpdiv (a, s0, s1, mpnw1)
 call mpnint (s1, s2, mpnw1)
-call mpsub (s1, s2, s3, mpnw1)
-
-!   Determine nearest multiple of Pi / 4.
-
-call mpmdc (s3, t1, n1, mpnw1)
-if (n1 >= - mpnbt) then
-  t1 = t1 * 2.d0 ** n1
-  ka = nint (8.d0 * t1)
-else
-  ka = 0
-endif
-
-t1 = ka / 8.d0
-call mpdmc (t1, 0, s1, mpnw1)
-call mpsub (s3, s1, s2, mpnw1)
-call mpmul (s0, s2, s1, mpnw1)
+call mpmul (s0, s2, s4, mpnw1)
+call mpsub (a, s4, s3, mpnw1)
 
 !   Check if reduced argument is zero.  If so then cos = 1 and sin = 0.
 
-if (s1(2) .eq. 0.d0) then
+if (s3(2) .eq. 0.d0) then
   s0(1) = mpnw1
   s0(2) = 1.d0
   s0(3) = 0.d0
@@ -1232,17 +1219,19 @@ endif
 !   Determine nq to scale reduced argument, then divide by 2^nq.
 !   If reduced argument is very close to zero, then nq = 0.
 
-if (s1(3) >= -1.d0) then
-  nq = max (nint (sqrt (0.5d0 * mpnw1 * mpnbt) - 3.d0), 1)
+if (s3(3) >= -1.d0) then
+  nq = int (sqrt (0.5d0 * mpnw1 * mpnbt))
 else
   nq = 0
 endif
-call mpdivd (s1, 2.d0**nq, s0, mpnw1)
+
+! write (6, *) 'nq =', nq
+
+call mpdivd (s3, 2.d0**nq, s0, mpnw1)
 call mpeq (s0, s1, mpnw1)
 
 !   Compute the sin of the reduced argument of s1 using a Taylor series.
 
-call mpeq (s1, s0, mpnw1) 
 call mpmul (s0, s0, s2, mpnw1) 
 mpnw2 =  mpnw1
 is = s0(2)
@@ -1288,7 +1277,7 @@ if (nq > 0) then
     call mpmuld (s5, 2.d0, s0, mpnw1)
   enddo
 
-!   Compute sin of reduced argument.
+!   Compute sin of result and correct sign.
 
   call mpmul (s0, s0, s4, mpnw1)
   call mpsub (f1, s4, s5, mpnw1)
@@ -1296,7 +1285,7 @@ if (nq > 0) then
   if (is < 1) s1(2) = - s1(2)
 else
 
-!   In case nq = 0, just compute cos of reduced argument.
+!   In case nq = 0, compute cos of result.
 
   call mpeq (s0, s1, mpnw1)
   call mpmul (s0, s0, s4, mpnw1)
@@ -1306,58 +1295,12 @@ endif
 
 115 continue
 
-!   This code in effect applies the trigonometric summation identities for
-!   s + a * Pi / 4.
-
-call mpeq (mpsqrt22con, s6, mpnw1)
-
-select case (ka)
-  case (-4, 4)
-    call mpeq (s0, s2, mpnw1)
-    call mpeq (s1, s3, mpnw1)
-    s2(2) = - s2(2)
-    s3(2) = - s3(2)
-  case (-3)
-    call mpsub (s1, s0, s4, mpnw1)
-    call mpadd (s0, s1, s5, mpnw1)
-    s5(2) = - s5(2)
-    call mpmul (s4, s6, s2, mpnw1)
-    call mpmul (s5, s6, s3, mpnw1)
-  case (-2)
-    call mpeq (s1, s2, mpnw1)
-    call mpeq (s0, s3, mpnw1)
-    s3(2) = - s3(2)
-  case (-1)
-    call mpadd (s0, s1, s4, mpnw1)
-    call mpsub (s1, s0, s5, mpnw1)
-    call mpmul (s4, s6, s2, mpnw1)
-    call mpmul (s5, s6, s3, mpnw1)
-  case (0)
-    call mpeq (s0, s2, mpnw1)
-    call mpeq (s1, s3, mpnw1)
-  case (1)
-    call mpsub (s0, s1, s4, mpnw1)
-    call mpadd (s0, s1, s5, mpnw1)
-    call mpmul (s4, s6, s2, mpnw1)
-    call mpmul (s5, s6, s3, mpnw1)
-  case (2)
-    call mpeq (s1, s2, mpnw1)
-    call mpeq (s0, s3, mpnw1)
-    s2(2) = - s2(2)
-  case (3)
-    call mpadd (s0, s1, s4, mpnw1)
-    s4(2) = - s4(2)
-    call mpsub (s0, s1, s5, mpnw1)
-    call mpmul (s4, s6, s2, mpnw1)
-    call mpmul (s5, s6, s3, mpnw1)
-end select
-
 !   Restore original precision level.
 
-call mproun (s2, mpnw) 
-call mproun (s3, mpnw) 
-call mpeq (s2, x, mpnw)
-call mpeq (s3, y, mpnw)
+call mproun (s0, mpnw) 
+call mproun (s1, mpnw) 
+call mpeq (s0, x, mpnw)
+call mpeq (s1, y, mpnw)
 
 120 continue
 
@@ -1403,6 +1346,143 @@ call mpeq (s1(mp7:), y, mpnw)
 
 return
 end subroutine mpcssnx
+
+subroutine mpegammaq (egamma, mpnw)
+
+!   This computes Euler's gamma to available precision (MPNW mantissa words).
+!   The algorithm is the following, which is an improvement to a scheme due to
+!   Sweeney (see https://www.davidhbailey.com/dhbpapers/const.pdf):
+
+!   Select N such that 1/(2^N * Exp(2^N)) < desired epsilon. Then compute
+!   Gamma = 2^N/Exp(2^N) * (Sum_{m >= 0} 2^(m*N)/(m+1)! * H(m+1)) - N * Log(2),
+!   where H(m) = 1 + 1/2 + ... + 1/m.
+
+implicit none
+integer i, itrmx, mpnw, mpnw1, m, neps, nn
+parameter (itrmx = 1000000)
+real (mprknd) egamma(0:), s0(0:mpnw+6), s1(0:mpnw+6), &
+  s2(0:mpnw+6), s3(0:mpnw+6), s4(0:mpnw+6), s5(0:mpnw+6), s6(0:mpnw+6), &
+  s7(0:mpnw+6), f(0:8)
+
+! End of declaration.
+
+s0(0) = mpnw + 7
+s1(0) = mpnw + 7
+s2(0) = mpnw + 7
+s3(0) = mpnw + 7
+s4(0) = mpnw + 7
+s5(0) = mpnw + 7
+s6(0) = mpnw + 7
+s7(0) = mpnw + 7
+mpnw1 = mpnw + 1
+
+!   Check if Log(2) has been precomputed.
+
+if (mpnw1 > mplog2con(1)) then
+  write (mpldb, 3) mpnw1
+3 format ('*** MPEGAMMA: Log(2) must be precomputed to precision',i9,' words.'/ &
+  'See documentation for details.')
+  call mpabrt (35)
+endif
+
+!   Compute eps and nn based on precision level.
+
+neps = - mpnw1 - 1
+nn = ceiling (log (dble (mpnw1 * mpnbt + mpnbt) * log (2.d0)) / log (2.d0))
+
+!   Initialize s0 through s4 to 1.
+
+s0(1) = mpnw
+s0(2) = 1.d0
+s0(3) = 0.d0
+s0(4) = 1.d0
+s0(5) = 0.d0
+s0(6) = 0.d0
+
+s1(1) = mpnw
+s1(2) = 1.d0
+s1(3) = 0.d0
+s1(4) = 1.d0
+s1(5) = 0.d0
+s1(6) = 0.d0
+
+s2(1) = mpnw
+s2(2) = 1.d0
+s2(3) = 0.d0
+s2(4) = 1.d0
+s2(5) = 0.d0
+s2(6) = 0.d0
+
+s3(1) = mpnw
+s3(2) = 1.d0
+s3(3) = 0.d0
+s3(4) = 1.d0
+s3(5) = 0.d0
+s3(6) = 0.d0
+
+s4(1) = mpnw
+s4(2) = 1.d0
+s4(3) = 0.d0
+s4(4) = 1.d0
+s4(5) = 0.d0
+s4(6) = 0.d0
+
+s7(1) = mpnw
+s7(2) = 1.d0
+s7(3) = 0.d0
+s7(4) = 2.d0
+s7(5) = 0.d0
+s7(6) = 0.d0
+
+!   Set s7 = 2^nn.
+
+call mpdmc (1.d0, nn, s7, mpnw1)
+
+!  Set f = 1.
+
+f(0) = 9.d0
+f(1) = mpnw1
+f(2) = 1.d0
+f(3) = 0.d0
+f(4) = 1.d0
+f(5) = 0.d0
+f(6) = 0.d0
+
+do m = 1, itrmx
+  call mpmul (s7, s0, s5, mpnw1)
+  call mpeq (s5, s0, mpnw1)
+  call mpdmc (dble (m + 1), 0, s5, mpnw1)
+  call mpdiv (f, s5, s6, mpnw1)
+  call mpadd (s1, s6, s5, mpnw1)
+  call mpeq (s5, s1, mpnw1)
+  call mpmuld (s2, m + 1.d0, s5, mpnw1)
+  call mpeq (s5, s2, mpnw1)
+  call mpmul (s0, s1, s5, mpnw1)
+  call mpdiv (s5, s2, s3, mpnw1)
+  call mpadd (s3, s4, s5, mpnw1)
+  call mpeq (s5, s4, mpnw1)
+  if (s3(3) - s4(3) < neps) goto 100
+enddo
+
+write (mpldb, 1)
+1   format ('*** MPEGAMMA: Loop end error.')
+    call mpabrt (36)
+
+100 continue
+
+call mpexp (s7, s5, mpnw1)
+call mpdiv (s7, s5, s6, mpnw1)
+call mpmul (s6, s4, s5, mpnw1)
+call mpmuld (mplog2con, dble (nn), s6, mpnw1)
+call mpsub (s5, s6, s0, mpnw1)
+
+!   Restore original precision level.
+
+call mproun (s0, mpnw) 
+call mpeq (s0, egamma, mpnw)
+
+return
+end subroutine mpegammaq
 
 subroutine mpexp (a, b, mpnw)
 
@@ -1719,7 +1799,6 @@ subroutine mpinitran (mpnw)
 
 implicit none
 integer mpnw, nwds, nwds6
-real (mprknd) f(0:8)
 
 !   Add three words to mpnw, since many of the routines in this module 
 !   increase the working precision level by one word upon entry.
@@ -1733,20 +1812,9 @@ mplog2con(0) = nwds6
 mplog2con(1) = 0
 mppicon(0) = nwds6
 mppicon(1) = 0
-mpsqrt22con(0) = nwds6
-mpsqrt22con(1) = 0
 
 call mppiq (mppicon, nwds)
 call mplog2q (mppicon, mplog2con, nwds)
-
-f(0) = 9
-f(1) = nwds
-f(2) = 1.d0
-f(3) = -1.d0
-f(4) = 0.5d0 * mpbdx
-f(5) = 0.d0
-f(6) = 0.d0
-call mpsqrt (f, mpsqrt22con, nwds)
 
 return
 end subroutine mpinitran
@@ -2222,7 +2290,7 @@ s0(3) = 0.d0
 s0(4) = 1.d0
 s0(5) = 0.d0
 s0(6) = 0.d0
-f(0) = mpnw + 7
+f(0) = 9.d0
 f(1) = mpnw1
 f(2) = 1.d0
 f(3) = 0.d0

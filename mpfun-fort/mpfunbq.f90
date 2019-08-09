@@ -4,7 +4,7 @@
 !  Basic function module (module MPFUNB); no real*16 support.
 !  Search for !> for version differences.
 
-!  Revision date:  6 Jul 2017
+!  Revision date:  22 Jan 2019
 
 !  AUTHOR:
 !     David H. Bailey
@@ -610,7 +610,8 @@ else
   s1(2) = sign (s1(2), a(la+2))
 endif
 
-call mpeq (mpsqrt22con, s2, mpnw1)
+call mpdmc (0.5d0, 0, s3, mpnw1)
+call mpsqrt (s3, s2, mpnw1)
 call mpmul (s0, s2, s3, mpnw1)
 call mpmul (s1, s2, s4, mpnw1)
   
@@ -3237,13 +3238,13 @@ if (a == 0.d0) then
 endif
 n1 = n / mpnbt
 n2 = n - mpnbt * n1
-aa = abs (a) * 2.d0 ** n2
+aa = abs (a) * 2.q0 ** n2
 
 !   Reduce AA to within 1 and MPBDX.
 
 if (aa >= mpbdx) then
 
-  do k = 1, 100
+  do k = 1, 350
     aa = mprdx * aa
     if (aa < mpbdx) then
       n1 = n1 + k
@@ -3253,7 +3254,7 @@ if (aa >= mpbdx) then
 
 elseif (aa < 1.d0) then
 
-  do k = 1, 100
+  do k = 1, 350
     aa = mpbdx * aa
     if (aa >= 1.d0) then
       n1 = n1 - k

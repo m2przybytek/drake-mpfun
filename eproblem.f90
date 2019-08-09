@@ -1,16 +1,16 @@
-module eproblem_mp
+module eproblem
 use mpmodule
 implicit none
 
 private
-public symU_diagonalize_mp
-public test_diagonalize_mp
+public symU_diagonalize
+public test_diagonalize
 
 integer,parameter :: max_QL_iterSingle = 30
 
 contains
 
-subroutine symU_diagonalize_mp(eps,n,diag,V,H,S)
+subroutine symU_diagonalize(eps,n,diag,V,H,S)
 implicit none
 type(mp_real),intent(in) :: eps
 integer,intent(in) :: n
@@ -32,7 +32,6 @@ if(n<0) then
 
 elseif(n==0) then
 
-   write(*,'(a)') 'WARNING!!! Zero matrix dimension in diagonalization!'
    return
 
 elseif(n==1) then
@@ -54,114 +53,174 @@ else
    allocate(super(n),perm(n))
 
    if(generalized) then
-      call LDL_factor(n,S,perm)
-      call LDL_transform(n,H,S,perm,V)
+      call UDUT_factor(n,S,perm,diag)
+      call UDUT_transform(n,H,S,perm,V)
    endif
 
-   V(1:n,1:n) = mpreal(0.d0)
-   do i=1,n
-      V(i,i) = 1
+!$OMP PARALLEL DO COLLAPSE(2)
+   do j=1,n
+      do i=1,n
+         if(i==j) then
+            V(i,j) = 1
+         else
+            V(i,j) = 0
+         endif
+      enddo
    enddo
+!$OMP END PARALLEL DO
 
    call tridiagonal_upper(n,H,V)
+
+!$OMP PARALLEL
+!$OMP DO
    do i=1,n
       diag(i) = H(i,i)
    enddo
+!$OMP END DO NOWAIT
+!$OMP DO
    do i=1,n-1
       super(i) = H(i,i+1)
    enddo
+!$OMP END DO NOWAIT
+!$OMP SINGLE
    super(n) = 0
+!$OMP END SINGLE NOWAIT
+!$OMP END PARALLEL
+
    call implicitQL(eps,n,diag,super,V)
 
    if(generalized) then
-      call LDL_solve(n,V,S,perm,super)
+      call UDUT_solve(n,V,S,perm,H)
    endif
 
    call CombSort(n,diag,perm)
-   do j=1,n
-      H(1:n,j) = V(1:n,perm(j))
-   enddo
-   V(1:n,1:n) = H(1:n,1:n)
 
+!$OMP PARALLEL
+!$OMP DO COLLAPSE(2)
+   do j=1,n
+      do i=1,n
+         H(i,j) = V(i,perm(j))
+      enddo
+   enddo
+!$OMP END DO
+!$OMP DO COLLAPSE(2)
+   do j=1,n
+      do i=1,n
+         V(i,j) = H(i,j)
+      enddo
+   enddo
+!$OMP END DO
+!$OMP END PARALLEL
+   
    deallocate(super,perm)
 
 endif
 
-end subroutine symU_diagonalize_mp
+end subroutine symU_diagonalize
 
-subroutine LDL_factor(n,A,perm)
+subroutine UDUT_factor(n,A,perm,work)
+! A -> U.D.UT factorization, with U upper-unit-diagonal
 implicit none
 integer,intent(in) :: n
 type(mp_real),intent(inout) :: A(:,:)
 integer,intent(out) :: perm(:)
-integer :: i,j,k,k_max
+type(mp_real) :: work(:)
+integer :: i,j,k,k_max,itmp
 type(mp_real) :: rtmp
-integer :: itmp
+logical :: positive
 
 do i=1,n
    perm(i) = i
 enddo
 
-do k=n,2,-1
+do k=n,1,-1
 
-   rtmp  = abs(A(k,k))
-   k_max = k
-   do i=1,k-1
+   rtmp = -1
+   do i=1,k
       if(abs(A(i,i))>rtmp) then
          rtmp  = abs(A(i,i))
          k_max = i
       endif
    enddo
 
-   if(k_max<k) then
-      rtmp           = A(k,k)
-      A(k,k)         = A(k_max,k_max)
-      A(k_max,k_max) = rtmp
-      do i=1,k_max-1
-         rtmp       = A(i,k)
-         A(i,k)     = A(i,k_max)
-         A(i,k_max) = rtmp
-      enddo
-      do i=k_max+1,k-1
-         rtmp       = A(i,k)
-         A(i,k)     = A(k_max,i)
-         A(k_max,i) = rtmp
-      enddo
-      do i=k+1,n
-         rtmp       = A(k,i)
-         A(k,i)     = A(k_max,i)
-         A(k_max,i) = rtmp
-      enddo
+!$OMP PARALLEL PRIVATE(rtmp)
+
+   if(k_max/=k) then
+!$OMP SECTIONS
+!$OMP SECTION
       itmp        = perm(k)
       perm(k)     = perm(k_max)
       perm(k_max) = itmp
+!$OMP SECTION
+      rtmp           = A(k,k)
+      A(k,k)         = A(k_max,k_max)
+      A(k_max,k_max) = rtmp
+!$OMP END SECTIONS NOWAIT
+!$OMP DO
+      do i=1,n
+         if(i<k_max) then
+            rtmp       = A(i,k)
+            A(i,k)     = A(i,k_max)
+            A(i,k_max) = rtmp
+         elseif(i>k) then
+            rtmp       = A(k,i)
+            A(k,i)     = A(k_max,i)
+            A(k_max,i) = rtmp
+         elseif(i/=k_max.and.i/=k) then
+            rtmp       = A(i,k)
+            A(i,k)     = A(k_max,i)
+            A(k_max,i) = rtmp
+         endif
+      enddo
+!$OMP END DO
    endif
 
+!$OMP SINGLE
    A(k,k) = 1/A(k,k)
+!$OMP END SINGLE
 
-   do j=1,k-1
-      rtmp   = A(j,k)
-      A(j,k) = A(j,k)*A(k,k)
-      do i=1,j
-         A(i,j) = A(i,j) - A(i,k)*rtmp
+   if(k/=1) then
+!$OMP DO
+      do i=1,k-1
+         work(i) = A(i,k)
+         A(i,k)  = A(i,k)*A(k,k)
       enddo
-   enddo
+!$OMP END DO
+!$OMP DO SCHEDULE(DYNAMIC)
+      do j=1,k-1
+         do i=1,j
+            A(i,j) = A(i,j) - A(i,k)*work(j)
+         enddo
+      enddo
+!$OMP END DO
+   endif
+
+!$OMP END PARALLEL
 
 enddo
 
-A(1,1) = 1/A(1,1)
-
+positive = .true.
+!$OMP PARALLEL DO
 do k=1,n
    if(A(k,k)<0) then
-      write(*,'(a)') 'S matrix in diagonalization is not positive definite!'
-      stop
+!$OMP ATOMIC WRITE
+      positive = .false.
+!$OMP END ATOMIC
+   else
+      A(k,k) = sqrt(A(k,k))
    endif
-   A(k,k) = sqrt(A(k,k))
 enddo
+!$OMP END PARALLEL DO
 
-end subroutine LDL_factor
+if(.not.positive) then
+   write(*,'(a)') 'S matrix in diagonalization is not positive definite!'
+   stop
+endif
 
-subroutine LDL_transform(n,A,U,perm,B)
+end subroutine UDUT_factor
+
+subroutine UDUT_transform(n,A,U,perm,B)
+! transformation iDh.U^(-1).A.UT^(-1).iDh -> A
 implicit none
 integer,intent(in) :: n
 type(mp_real),intent(inout) :: A(:,:)
@@ -169,161 +228,193 @@ type(mp_real),intent(in) :: U(:,:)
 integer,intent(in) :: perm(:)
 type(mp_real) :: B(:,:)
 integer :: i,j,k
-type(mp_real) :: rtmp
 
-do i=1,n
-   k = perm(i)
-   do j=1,k
-      B(i,j) = A(j,k)
-   enddo
-   do j=k+1,n
-      B(i,j) = A(k,j)
-   enddo
-enddo
+!$OMP PARALLEL
 
-do k=1,n
-   do j=n,1,-1
-      rtmp = B(j,k)
-      do i=1,j-1
-         B(i,k) = B(i,k) - U(i,j)*rtmp
-      enddo
-      B(j,k) = U(j,j)*rtmp
-   enddo
-enddo
-
+!$OMP DO COLLAPSE(2)
 do j=1,n
-   k = perm(j)
+   do i=1,n
+      if(perm(i)<=j) then
+         B(i,j) = A(perm(i),j)
+      else
+         B(i,j) = A(j,perm(i))
+      endif
+   enddo
+enddo
+!$OMP END DO
+
+!$OMP DO
+do k=1,n
+   associate(x => B(:,k))
+     do j=n,1,-1
+        do i=1,j-1
+           x(i) = x(i) - U(i,j)*x(j)
+        enddo
+        x(j) = U(j,j)*x(j)
+     enddo
+   end associate
+enddo
+!$OMP END DO
+
+!$OMP DO SCHEDULE(DYNAMIC)
+do j=1,n
    do i=1,j
-      A(i,j) = B(i,k)
+      A(i,j) = B(i,perm(j))
    enddo
 enddo
+!$OMP END DO
 
-do j=n,1,-1
-   do i=1,j-1
-      rtmp = U(i,j)
-      do k=1,i
-         A(k,i) = A(k,i) - A(k,j)*rtmp
-      enddo
-   enddo
-   rtmp = U(j,j)
-   do k=1,j
-      A(k,j) = A(k,j)*rtmp
-   enddo
+!$OMP DO SCHEDULE(DYNAMIC)
+do k=1,n
+   associate(x => A(k,:))
+     do j=n,k,-1
+        do i=k,j-1
+           x(i) = x(i) - U(i,j)*x(j)
+        enddo
+        x(j) = U(j,j)*x(j)
+     enddo
+   end associate
 enddo
+!$OMP END DO
 
-end subroutine LDL_transform
+!$OMP END PARALLEL
 
-subroutine LDL_solve(n,A,U,perm,b)
+end subroutine UDUT_transform
+
+subroutine UDUT_solve(n,A,U,perm,B)
+! solution of UT^(-1).iDh.A -> A
 implicit none
 integer,intent(in) :: n
 type(mp_real),intent(inout) :: A(:,:)
 type(mp_real),intent(in) :: U(:,:)
 integer,intent(in) :: perm(:)
-type(mp_real) :: b(:)
+type(mp_real) :: B(:,:)
 integer :: i,j,k
-type(mp_real) :: rtmp
 
-do k=1,n
-   do j=1,n
-      rtmp = A(j,k)*U(j,j)
-      do i=1,j-1
-         rtmp = rtmp - b(i)*U(i,j)
-      enddo
-      b(j) = rtmp
-   enddo
-   do j=1,n
-      A(perm(j),k) = b(j)
+!$OMP PARALLEL
+
+!$OMP DO COLLAPSE(2)
+do j=1,n
+   do i=1,n
+      B(i,j) = A(i,j)*U(i,i)
    enddo
 enddo
+!$OMP END DO
 
-end subroutine LDL_solve
+!$OMP DO
+do k=1,n
+   associate(x => B(:,k))
+     do j=2,n
+        do i=1,j-1
+           x(j) = x(j) - U(i,j)*x(i)
+        enddo
+     enddo
+   end associate
+enddo
+!$OMP END DO
+
+!$OMP DO COLLAPSE(2)
+do j=1,n
+   do i=1,n
+      A(perm(i),j) = B(i,j)
+   enddo
+enddo
+!$OMP END DO
+
+!$OMP END PARALLEL
+
+end subroutine UDUT_solve
 
 subroutine tridiagonal_upper(n,A,V)
 implicit none
 integer,intent(in) :: n
 type(mp_real),intent(inout) :: A(:,:),V(:,:)
-integer :: i,j,k,j_1
-type(mp_real) :: sumoff,scale,inv_scale,xnorm,xnorm2,kfac
-type(mp_real) :: rtmp,rtmp1,rtmp2
+integer :: i,j,k
+type(mp_real) :: scale,xnorm,factor
+type(mp_real) :: rtmp
 
-do j=n,3,-1
-   j_1 = j - 1
+do k=n,3,-1
 
-   sumoff = 0
-   do i=1,j-2
-      sumoff = sumoff + abs(A(i,j))
+   rtmp = 0
+   do i=1,k-2
+      rtmp = rtmp + abs(A(i,k))
    enddo
-   if(sumoff==0) cycle
+   if(rtmp==0) cycle
 
-   scale = sumoff + abs(A(j_1,j))
-   inv_scale = 1/scale
-   do i=1,j_1
-      A(i,j) = A(i,j)*inv_scale
-   enddo
+   scale = rtmp + abs(A(k-1,k))
 
-   xnorm2 = 0
-   do i=1,j_1
-      xnorm2 = xnorm2 + A(i,j)**2
+   factor = 1/scale
+   rtmp = 0
+   do i=1,k-1
+      A(i,k) = factor*A(i,k)
+      rtmp = rtmp + A(i,k)**2
    enddo
-   xnorm = sign(sqrt(xnorm2),A(j_1,j))
-   rtmp = 1/sqrt(xnorm2 + xnorm*A(j_1,j))
-   do i=1,j-2
-      V(i,j) = A(i,j)*rtmp
-   enddo
-   V(j_1,j) = (A(j_1,j) + xnorm)*rtmp
+   
+   xnorm = sign(sqrt(rtmp),A(k-1,k))
 
-   do i=1,j_1
-      rtmp1 = 0
-      rtmp2 = V(i,j)
-      do k=1,i-1
-         rtmp1  = rtmp1  + A(k,i)*V(k,j)
-         A(k,j) = A(k,j) + A(k,i)*rtmp2
+   A(k-1,k) = A(k-1,k) + xnorm
+   factor = 1/sqrt(A(k-1,k)*xnorm)
+   do j=1,k-1
+      V(j,k) = factor*A(j,k)
+      A(j,k) = A(j,j)*V(j,k)
+      do i=1,j-1
+         A(i,k) = A(i,k) + A(i,j)*V(j,k)
+         A(j,k) = A(j,k) + A(i,j)*V(i,k)
       enddo
-      A(i,j) = rtmp1 + A(i,i)*rtmp2
    enddo
 
    rtmp = 0
-   do i=1,j_1
-      rtmp = rtmp + A(i,j)*V(i,j)
+   do i=1,k-1
+      rtmp = rtmp + A(i,k)*V(i,k)
    enddo
-   kfac = rtmp*0.5d0
-   do i=1,j_1
-      A(i,j) = A(i,j) - kfac*V(i,j)
+   factor = rtmp/2
+   
+!$OMP PARALLEL
+!$OMP DO
+   do i=1,k-1
+      A(i,k) = A(i,k) - factor*V(i,k)
    enddo
-
-   do i=1,j_1
-      rtmp1 = V(i,j)
-      rtmp2 = A(i,j)
-      do k=1,i
-         A(k,i) = A(k,i) - rtmp1*A(k,j) - rtmp2*V(k,j)
+!$OMP END DO
+!$OMP DO SCHEDULE(DYNAMIC)
+   do j=1,k-1
+      do i=1,j
+         A(i,j) = A(i,j) - A(i,k)*V(j,k) - A(j,k)*V(i,k)
       enddo
    enddo
-
-   do i=1,j-2
-      A(i,j) = 0
+!$OMP END DO
+!$OMP DO
+   do i=1,k-1
+      A(i,k) = 0
    enddo
-   A(j_1,j) = -xnorm*scale
+!$OMP END DO
+!$OMP END PARALLEL
+
+   A(k-1,k) = -scale*xnorm
 
 enddo
 
-do j=3,n
-   j_1 = j - 1
+do k=3,n
 
-   if(abs(V(j_1,j))==0) cycle
+   if(abs(V(k-1,k))==0) cycle
 
-   do i=1,j_1
+!$OMP PARALLEL PRIVATE(rtmp)
+!$OMP DO SCHEDULE(DYNAMIC)
+   do j=1,k-1
       rtmp = 0
-      do k=1,j_1
-         rtmp = rtmp + V(k,i)*V(k,j)
+      do i=1,k-1
+         rtmp = rtmp + V(i,j)*V(i,k)
       enddo
-      do k=1,j_1
-         V(k,i) = V(k,i) - rtmp*V(k,j)
+      do i=1,k-1
+         V(i,j) = V(i,j) - rtmp*V(i,k)
       enddo
    enddo
-
-   do i=1,j_1
-      V(i,j) = 0
+!$OMP END DO
+!$OMP DO
+   do i=1,k-1
+      V(i,k) = 0
    enddo
+!$OMP END DO
+!$OMP END PARALLEL
 
 enddo
 
@@ -336,10 +427,10 @@ integer,intent(in) :: n
 type(mp_real),intent(inout) :: A(:),B(:),V(:,:)
 type(mp_real) :: thr_EPSILON
 type(mp_real) :: thr_ROTATION
-integer :: jstart,jend,j,j_1,i
+integer :: i,j,jstart,jend
 integer :: iter,iterSingle,Nrot
-type(mp_real) :: theta,t,c,s,shift,rot
-type(mp_real) :: d1,d2,e,f1,f2,pythag,l12
+type(mp_real) :: theta,t,c,s,cs,shift,rtmp
+type(mp_real) :: d1,d2,e,f1,f2,l12
 
 thr_EPSILON = eps
 thr_ROTATION = sqrt(1/eps)
@@ -389,29 +480,31 @@ do while(jstart<n)
       d1 = A(jend)
       f2 = d1 - shift
       do j=jend,jstart+1,-1
-         j_1 = j - 1
 
          d2 = d1
-         d1 = A(j_1)
-         e  = c*B(j_1)
-         f1 = s*B(j_1)
+         d1 = A(j-1)
+         e  = c*B(j-1)
+         f1 = s*B(j-1)
 
-         pythag = hypot(f1,f2)
-         c = f2/pythag
-         s = f1/pythag
+         cs = hypot(f1,f2)
+         c  = f2/cs
+         s  = f1/cs
 
-         l12 = s*(d1 - d2) + 2*c*e
+         l12  = s*(d1 - d2) + 2*c*e
          d1   = d1 - s*l12
          A(j) = d2 + s*l12
-         B(j) = pythag
+         B(j) = cs
          f2   = c*l12 - e
 
          Nrot = Nrot + 1
+!$OMP PARALLEL DO PRIVATE(rtmp)
          do i=1,n
-            rot = V(i,j_1)
-            V(i,j_1) = c*rot - s*V(i,j)
-            V(i,j)   = s*rot + c*V(i,j)
+            rtmp     = c*V(i,j-1) - s*V(i,j)
+            V(i,j)   = s*V(i,j-1) + c*V(i,j)
+            V(i,j-1) = rtmp
          enddo
+!$OMP END PARALLEL DO
+
       enddo
       A(jstart) = d1
       B(jstart) = f2
@@ -444,7 +537,7 @@ do while(gap>1.or.swapped)
    swapped = .false.
 
    do i=1,n-gap
-      if (val(i+gap)<val(i)) then
+      if(val(i+gap)<val(i)) then
 
          rtmp = val(i)
          val(i) = val(i+gap)
@@ -462,7 +555,7 @@ enddo
 
 end subroutine CombSort
 
-subroutine test_diagonalize_mp(n,diag,V,H,S)
+subroutine test_diagonalize(n,diag,V,H,S)
 implicit none
 integer,intent(in) :: n
 type(mp_real),intent(in) :: diag(:)
@@ -546,7 +639,7 @@ write(*,'(a,2es11.3)') 'Product of different eigenvectors:    <i|j> =    '
 write(*,'(a)',advance='no') 'max:  '; call mpwrite(6,30,20,max_off)
 write(*,'(a)',advance='no') 'mean: '; call mpwrite(6,30,20,mean_off)
 
-end subroutine test_diagonalize_mp
+end subroutine test_diagonalize
 
 subroutine multiply_upper(n,A,B,C)
 implicit none
@@ -570,4 +663,4 @@ enddo
 
 end subroutine multiply_upper
 
-end module eproblem_mp
+end module eproblem

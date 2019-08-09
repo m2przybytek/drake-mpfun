@@ -5,7 +5,7 @@
 !  Variant Q1: Precision level specifications are *optional*; has real*16 support.
 !  Search for !> for version differences.
 
-!  Revision date:  19 Apr 2017
+!  Revision date:  16 January 2019
 
 !  AUTHOR:
 !     David H. Bailey
@@ -106,9 +106,9 @@ private &
   mp_anint, mp_asin, mp_asinh, mp_atan, mp_atan2, mp_atanh, mp_ator1, &
   mp_atorn, mp_berne, mp_besselj, mp_bessel_j0, mp_bessel_j1, &
   mp_bessel_jn, mp_ccos, mp_cexp, mp_clog, mp_conjg, mp_cos, mp_cosh, &
-  mp_csin, mp_csqrt, mp_cssh, mp_cssn, mp_dctoz, mp_dctoz2, mp_mdi, &
-  mp_dtor, mp_dtor2, mp_eform, mp_exp, mp_fform, mp_gamma, mp_hypot, &
-  mp_incgamma, mp_init, mp_log, mp_log2, mp_max, mp_min, mp_nrt, &
+  mp_csin, mp_csqrt, mp_cssh, mp_cssn, mp_dctoz, mp_dctoz2, mp_dtor, &
+  mp_dtor2, mp_eform, mp_egamma, mp_exp, mp_fform, mp_gamma, mp_hypot, &
+  mp_incgamma, mp_init, mp_log, mp_log2, mp_max, mp_mdi, mp_min, mp_nrt, &
   mp_pi, mp_prodd, mp_quotd, mp_readr1, mp_readr2, mp_readr3, &
   mp_readr4, mp_readr5, mp_readz1, mp_readz2, mp_readz3, mp_readz4, &
   mp_readz5, mp_rtod, mp_rtor, mp_rtoz, mp_setwp, mp_sign, mp_sin, &
@@ -412,6 +412,10 @@ end interface
 
 interface mpeform
   module procedure mp_eform
+end interface
+
+interface mpegamma
+  module procedure mp_egamma
 end interface
 
 interface mpfform
@@ -3279,6 +3283,26 @@ contains
     return
   end subroutine
  
+  function mp_egamma (iprec)
+    implicit none
+    type (mp_real):: mp_egamma
+    integer mpnw
+
+!>  In version #1, uncomment these six lines:
+    integer, optional, intent (in):: iprec
+    if (present (iprec)) then
+      mpnw = mp_setwp (iprec)
+    else
+      mpnw = mpwds
+    endif
+!>  Otherwise in version #2, uncomment these two lines:
+!    integer, intent (in):: iprec
+!    mpnw = mp_setwp (iprec)
+
+    mp_egamma%mpr(0) = mpwds6
+    call mpegammaq (mp_egamma%mpr, mpnw)
+  end function
+
   function mp_exp (ra)
     implicit none
     type (mp_real):: mp_exp
@@ -3848,7 +3872,7 @@ contains
     integer n1, mpnw
     mpnw = min (int (ra%mpr(1)), mpwds)
     call mpmqc (ra%mpr, mp_rtoq, n1, mpnw)
-    mp_rtoq = mp_rtoq * 2.d0**n1
+    mp_rtoq = mp_rtoq * 2.q0**n1
     return
   end function
 

@@ -3,7 +3,7 @@
 !  MPFUN-Fort: A thread-safe arbitrary precision computation package
 !  Binary-decimal, decimal-binary and I/O functions (module MPFUNC)
 
-!  Revision date:  7 Jun 2017
+!  Revision date:  9 Nov 2018
 
 !  AUTHOR:
 !     David H. Bailey
@@ -217,7 +217,9 @@ if (kexpst > 0) then
   enddo
 
   iexp = mpdigin (ca, lexp)
-  if (a(kexpsgn) == '-') iexp = -iexp
+  if (kexpsgn > 0) then
+    if (a(kexpsgn) == '-') iexp = -iexp
+  endif
 else
   iexp = 0
 endif

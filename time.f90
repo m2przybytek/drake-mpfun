@@ -1,18 +1,17 @@
 module time
+use iso_fortran_env, only : real64
 implicit none
 
 private
 public timer
 
-integer,parameter :: prec = kind(0.d0)
-
 integer,save :: refYear = 0
 
-real(prec),parameter :: second   = 1
-real(prec),parameter :: millisec = second / 10**3
-real(prec),parameter :: minute   = second * 60
-real(prec),parameter :: hour     = minute * 60
-real(prec),parameter :: day      = hour   * 24
+real(real64),parameter :: second   = 1
+real(real64),parameter :: millisec = second / 10**3
+real(real64),parameter :: minute   = second * 60
+real(real64),parameter :: hour     = minute * 60
+real(real64),parameter :: day      = hour   * 24
 
 integer,parameter :: string_out_LENGTH = 20
 
@@ -21,8 +20,8 @@ contains
 subroutine timer(action,Tcpu,Twall)
 implicit none
 character(*),intent(in) :: action
-real(prec),intent(inout) :: Tcpu,Twall
-real(prec) :: Tcpu_local,Twall_local
+real(real64),intent(inout) :: Tcpu,Twall
+real(real64) :: Tcpu_local,Twall_local
 integer :: DateTime(8)
 character(string_out_LENGTH) :: string_out
 
@@ -41,7 +40,7 @@ if(adjustl(trim(action))/='START') then
    call print_time(Tcpu_local-Tcpu)
    write(*,'(a)',advance='no') ' |  Wall'
    call print_time(Twall_local-Twall)
-   write(*,*)
+   write(*,'()')
 
 endif
 
@@ -52,7 +51,7 @@ end subroutine timer
 
 subroutine wall_time(time,DateTime)
 implicit none
-real(prec),intent(out) :: time
+real(real64),intent(out) :: time
 integer,intent(in) :: DateTime(8)
 integer :: imonth,iyear
 
@@ -106,9 +105,9 @@ end function leapYear
 
 subroutine print_time(full)
 implicit none
-real(prec),intent(in) :: full
+real(real64),intent(in) :: full
 integer :: dec_hour,dec_minute
-real(prec) :: dec_second
+real(real64) :: dec_second
 
 dec_hour   = int(full/hour)
 dec_minute = int((full - dec_hour*hour)/minute)
