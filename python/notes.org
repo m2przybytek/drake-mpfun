@@ -1,0 +1,12 @@
+Wpływ wartości c1: zbeżność mp2 tylko! A najlepiej dwuwymiarowo.
+
+Przypadek 2+2: nocc=2.
+
+Ważna jest ilość nbas. SCF musi być o rząd wielkośći lepiej. Sprawdzić gdzie 10^-5 csf jest uzbieżniony do 10^-6. Jak najmniej! bo dłużej będą trwały obliczenia. Zacząć od scf i uzbieżnić do 10^-6. Dla każdej kombinacji nocc i g. To bardzo istotne. See Lesiuk Przybytek 2018 PRA.
+
+Jawnie skorelowane: chcemy eta-niezależne wyniki raczej. Raczej MP2. omega do 20-40 -- sprawdzić zbieżność dla każdej kombinacji alfa i c1.
+
+if(Control%omega>=0) then
+      call calc_CC
+
+Baza -- tylko harmoniczny * harmocznicy * czynnik! nie zajęte i virtualne.

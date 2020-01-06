@@ -1,0 +1,1233 @@
+(* Content-type: application/vnd.wolfram.mathematica *)
+
+(*** Wolfram Notebook File ***)
+(* http://www.wolfram.com/nb *)
+
+(* CreatedBy='Mathematica 11.0' *)
+
+(*CacheID: 234*)
+(* Internal cache information:
+NotebookFileLineBreakTest
+NotebookFileLineBreakTest
+NotebookDataPosition[       158,          7]
+NotebookDataLength[     56042,       1225]
+NotebookOptionsPosition[     55691,       1208]
+NotebookOutlinePosition[     56024,       1223]
+CellTagsIndexPosition[     55981,       1220]
+WindowFrame->Normal*)
+
+(* Beginning of Notebook Content *)
+Notebook[{
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"AlphaMin", "=", "0.10"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"AlphaMax", "=", "0.49"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"AlphaInterval", "=", "0.01"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"gfacMin", "=", "1."}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"gfacMax", "=", "1."}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"gfacInterval", "=", "1."}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"nbasMin", "=", "8"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"nbasMax", "=", "10"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"nbasInterval", "=", "2"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"noccMin", "=", "1"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"noccMax", "=", "1"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"noccInterval", "=", "1"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"omegaMin", "=", "10"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"omegaMax", "=", "19"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"omegaInterval", "=", "1"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"c0", "=", "1.0"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"c1", "=", "0.5"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"Table", "[", "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{
+     RowBox[{"Table", "[", "\[IndentingNewLine]", 
+      RowBox[{
+       RowBox[{
+        RowBox[{"Table", "[", "\[IndentingNewLine]", 
+         RowBox[{
+          RowBox[{
+           RowBox[{"Table", "[", "\[IndentingNewLine]", 
+            RowBox[{
+             RowBox[{
+              RowBox[{"Table", "[", "\[IndentingNewLine]", 
+               RowBox[{
+                RowBox[{
+                 RowBox[{
+                  RowBox[{
+                   RowBox[{
+                    RowBox[{
+                    RowBox[{
+                    RowBox[{
+                    RowBox[{"res", "[", "gfac", "]"}], "[", "nbas", "]"}], 
+                    "[", "nocc", "]"}], "[", "omega", "]"}], "[", "alpha", 
+                    "]"}], "[", "c0", "]"}], "[", "c1", "]"}], "=", " ", 
+                 RowBox[{
+                  RowBox[{"ReadList", "[", 
+                   RowBox[{
+                   "\"\</home/grining/drake-mpfun/python/results/nocc=\>\"", "<>", 
+                    RowBox[{"ToString", "[", "nocc", "]"}], "<>", 
+                    "\"\<nbas=\>\"", "<>", 
+                    RowBox[{"ToString", "[", "nbas", "]"}], "<>", 
+                    "\"\<omega=\>\"", "<>", 
+                    RowBox[{"ToString", "[", "omega", "]"}], "<>", 
+                    "\"\<gfac=\>\"", "<>", 
+                    RowBox[{"ToString", "[", 
+                    RowBox[{"NumberForm", "[", 
+                    RowBox[{"gfac", ",", " ", 
+                    RowBox[{"{", 
+                    RowBox[{"2", ",", "2"}], "}"}]}], "]"}], "]"}], "<>", 
+                    "\"\<alpha=\>\"", "<>", 
+                    RowBox[{"ToString", "[", 
+                    RowBox[{"NumberForm", "[", 
+                    RowBox[{"alpha", ",", " ", 
+                    RowBox[{"{", 
+                    RowBox[{"2", ",", "2"}], "}"}]}], "]"}], "]"}], "<>", 
+                    "\"\<c0=\>\"", "<>", 
+                    RowBox[{"ToString", "[", 
+                    RowBox[{"NumberForm", "[", 
+                    RowBox[{"c0", ",", " ", 
+                    RowBox[{"{", 
+                    RowBox[{"2", ",", "2"}], "}"}]}], "]"}], "]"}], "<>", 
+                    "\"\<c1=\>\"", "<>", 
+                    RowBox[{"ToString", "[", 
+                    RowBox[{"NumberForm", "[", 
+                    RowBox[{"c1", ",", " ", 
+                    RowBox[{"{", 
+                    RowBox[{"2", ",", "2"}], "}"}]}], "]"}], "]"}], "<>", 
+                    "\"\<.out_FCCD\>\""}], "]"}], "[", 
+                  RowBox[{"[", "1", "]"}], "]"}]}], "\[IndentingNewLine]", 
+                ",", 
+                RowBox[{"{", 
+                 RowBox[{
+                 "gfac", ",", " ", "gfacMin", ",", " ", "gfacMax", ",", 
+                  "gfacInterval"}], "}"}]}], "]"}], ";"}], 
+             "\[IndentingNewLine]", ",", 
+             RowBox[{"{", 
+              RowBox[{
+              "nbas", ",", " ", "nbasMin", ",", "nbasMax", ",", 
+               "nbasInterval"}], "}"}]}], "]"}], ";"}], "\[IndentingNewLine]",
+           ",", 
+          RowBox[{"{", 
+           RowBox[{
+           "nocc", ",", " ", "noccMin", ",", "noccMax", ",", "noccInterval"}],
+            "}"}]}], "]"}], ";"}], "\[IndentingNewLine]", ",", 
+       RowBox[{"{", 
+        RowBox[{
+        "omega", ",", "omegaMin", ",", " ", "omegaMax", ",", " ", 
+         "omegaInterval"}], "}"}]}], "]"}], ";"}], "\[IndentingNewLine]", ",", 
+    RowBox[{"{", 
+     RowBox[{
+     "alpha", ",", "AlphaMin", ",", "AlphaMax", ",", "AlphaInterval"}], 
+     "}"}]}], "]"}], ";"}]}], "Input",
+ CellChangeTimes->{{3.783614410552659*^9, 3.7836145531965847`*^9}, {
+   3.783615000907449*^9, 3.783615049009932*^9}, {3.783615094540736*^9, 
+   3.7836150953125973`*^9}, {3.783615193393681*^9, 3.783615214580019*^9}, {
+   3.783615835882041*^9, 3.7836158593086567`*^9}, {3.783616250322137*^9, 
+   3.7836162586960917`*^9}, {3.783616508758555*^9, 3.7836165237555428`*^9}, {
+   3.7836167448744507`*^9, 3.783616752758854*^9}, {3.7836178905941477`*^9, 
+   3.7836179480062723`*^9}, {3.783618101185893*^9, 3.783618163768324*^9}, {
+   3.783618902127174*^9, 3.783618910128837*^9}, {3.783619128365369*^9, 
+   3.7836191301043*^9}, {3.783619908537725*^9, 3.783619976772085*^9}, {
+   3.783620008427479*^9, 3.783620020447194*^9}, {3.7836202164664392`*^9, 
+   3.783620252428718*^9}, {3.783620416077814*^9, 3.783620418356826*^9}, {
+   3.784095392524001*^9, 3.784095409798581*^9}, {3.784095453836286*^9, 
+   3.784095487812517*^9}, {3.7840955994668913`*^9, 3.78409560203301*^9}, {
+   3.7840958910744534`*^9, 3.784095948183012*^9}, 3.784095997916202*^9, {
+   3.784096047924582*^9, 3.784096047971353*^9}, {3.784096092191387*^9, 
+   3.784096092897106*^9}, {3.784096709030015*^9, 3.784096717277978*^9}, {
+   3.784097685348255*^9, 3.7840976855063047`*^9}, {3.784099880820043*^9, 
+   3.784099881051002*^9}, {3.7841154586962357`*^9, 3.784115458755704*^9}, {
+   3.784120759596312*^9, 3.7841207600188923`*^9}, {3.784121108528008*^9, 
+   3.7841211672555237`*^9}, {3.7841234061031017`*^9, 3.784123418293449*^9}, {
+   3.784123893927886*^9, 3.784123894591202*^9}, {3.784125002126265*^9, 
+   3.784125015667553*^9}, {3.7841317269058847`*^9, 3.784131729436584*^9}, {
+   3.784137471259448*^9, 3.7841374716994658`*^9}}],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"Table", "[", "\[IndentingNewLine]", 
+  RowBox[{
+   RowBox[{
+    RowBox[{
+     RowBox[{"Res", "[", "omega", "]"}], "=", 
+     RowBox[{"Table", "[", "\[IndentingNewLine]", 
+      RowBox[{
+       RowBox[{"{", 
+        RowBox[{"alpha", ",", " ", 
+         RowBox[{
+          RowBox[{
+           RowBox[{
+            RowBox[{
+             RowBox[{
+              RowBox[{
+               RowBox[{"res", "[", "1.", "]"}], "[", "nbas", "]"}], "[", "1", 
+              "]"}], "[", "omega", "]"}], "[", "alpha", "]"}], "[", "1.00", 
+           "]"}], "[", "0.50", "]"}]}], "}"}], ",", "\[IndentingNewLine]", 
+       " ", 
+       RowBox[{"{", 
+        RowBox[{
+        "alpha", ",", "AlphaMin", ",", "AlphaMax", ",", "AlphaInterval"}], 
+        "}"}]}], "\[IndentingNewLine]", "]"}]}], ";", "\[IndentingNewLine]", 
+    RowBox[{"ListPlot", "[", 
+     RowBox[{
+      RowBox[{"Res", "[", "omega", "]"}], ",", 
+      RowBox[{"ImageSize", "\[Rule]", "400"}], ",", " ", 
+      RowBox[{"PlotLabel", "\[Rule]", 
+       RowBox[{"\"\<omega=\>\"", "<>", 
+        RowBox[{"ToString", "[", "omega", "]"}], "<>", "\"\<nbas=\>\"", "<>", 
+        
+        RowBox[{"ToString", "[", "nbas", "]"}]}]}]}], "]"}]}], ",", 
+   "\[IndentingNewLine]", 
+   RowBox[{"{", 
+    RowBox[{
+    "omega", ",", "omegaMin", ",", " ", "omegaMax", ",", " ", 
+     "omegaInterval"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{
+    "nbas", ",", " ", "nbasMin", ",", "nbasMax", ",", "nbasInterval"}], 
+    "}"}]}], "\[IndentingNewLine]", "]"}]], "Input",
+ CellChangeTimes->{{3.7836152397597322`*^9, 3.783615341096623*^9}, {
+   3.783616533731214*^9, 3.7836165506946697`*^9}, 3.7836167661249104`*^9, 
+   3.783616815917077*^9, {3.783616961816183*^9, 3.783616964315145*^9}, {
+   3.783618921300187*^9, 3.783618968337908*^9}, {3.783619200546373*^9, 
+   3.783619201243485*^9}, {3.7836199205717897`*^9, 3.783619933117178*^9}, {
+   3.783619987615217*^9, 3.783619987981306*^9}, 3.783620080709033*^9, 
+   3.783620431216695*^9, {3.784095629706296*^9, 3.784095672329989*^9}, {
+   3.784095960881258*^9, 3.784095965262801*^9}, {3.78409606617645*^9, 
+   3.784096069786182*^9}, {3.7840961596348743`*^9, 3.784096164360394*^9}, {
+   3.7840962061275387`*^9, 3.7840962197620993`*^9}, {3.7840998849341*^9, 
+   3.784099970287743*^9}, {3.784123386883233*^9, 3.784123388740892*^9}, {
+   3.784123423982799*^9, 3.7841235062284*^9}, {3.7841374882995043`*^9, 
+   3.78413752227593*^9}}],
+
+Cell[BoxData[
+ RowBox[{"{", 
+  RowBox[{
+   RowBox[{"{", 
+    RowBox[{
+     GraphicsBox[{{}, {{}, 
+        {RGBColor[0.368417, 0.506779, 0.709798], PointSize[
+         0.012833333333333334`], AbsoluteThickness[1.6], 
+         PointBox[CompressedData["
+1:eJw90F1IU3EYBvDTMOyDEupAgbSYF3GqG8nYheAerOwDCpr0YSELxISY6eyi
+hl3kRVPCIodd1CC6SMwSdhGEW5TmVkxlml/rbFOXRlSb24rwdCGxet+/7Lxw
+OPzg8Jz3eU11zdWXDZIkKfTw2/OIxw/b4qGj2R8r2Ft7P6Apb1Bw79xshuw3
+upatvkHciOyxs3scFZvUp+/QdLdhIztt9dEXwzCf3+lNkw+W8QSRM3fWsG/K
+3mNLre/RXXRpAzuoKfSHD6h87H67TKYwSgzhddEDJ7ua46wj2Np1pZy9tt8o
+puWPBewvrRw4hv5MYzyl7xvGhdPbhtgtvJ5jHM8zqwMpff8JDJYZw2xJzCQs
+zR0ib63PJMbbXjWyjy/xD6ZgqpO2p/V+U8hVGUTfrgAXmIZnaF19Vu87A0W+
+WPGLLOqoMzj8LPHyt95/Fl9rzN818m5exxhBf99+wypZxAUiUG5nS/+RG8R8
+gn3sSO/6ZP4+KmzBXs8WMqfJXhX1m6tO7kjm7xWFaVjLlZD/cJwWxbXiwr+l
+yfz9Ygj91NyVZIsIjOPqrkL5bDJ/zzicJ4IxO7md13PNoTN2xtJO3ifuOw+8
+GHnSQ54I88yj7eEBW4gszudYwDfPQDxLFnXlBDrUW9eLUysQ6/kScEa73afI
+Iq72M0r8fXdc5P9/JV1y
+          "]]}, {}}, {}, {}, {{}, {}}},
+      AspectRatio->NCache[GoldenRatio^(-1), 0.6180339887498948],
+      Axes->{True, True},
+      AxesLabel->{None, None},
+      AxesOrigin->{0.09390625000000001, 1.3068448807904298`},
+      DisplayFunction->Identity,
+      Frame->{{False, False}, {False, False}},
+      FrameLabel->{{None, None}, {None, None}},
+      FrameTicks->{{Automatic, Automatic}, {Automatic, Automatic}},
+      GridLines->{None, None},
+      GridLinesStyle->Directive[
+        GrayLevel[0.5, 0.4]],
+      ImagePadding->All,
+      ImageSize->400,
+      Method->{"CoordinatesToolOptions" -> {"DisplayFunction" -> ({
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 1, 2][#]& )[
+             Part[#, 1]], 
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 2, 2][#]& )[
+             Part[#, 2]]}& ), "CopiedValueFunction" -> ({
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 1, 2][#]& )[
+             Part[#, 1]], 
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 2, 2][#]& )[
+             Part[#, 2]]}& )}},
+      PlotLabel->FormBox["\"omega=10nbas=8\"", TraditionalForm],
+      PlotRange->{{0.1, 0.49}, {1.306864470169652, 1.3072562577540983`}},
+      PlotRangeClipping->True,
+      PlotRangePadding->{{
+         Scaled[0.02], 
+         Scaled[0.02]}, {
+         Scaled[0.05], 
+         Scaled[0.05]}},
+      Ticks->{Automatic, Automatic}], ",", 
+     GraphicsBox[{{}, {{}, 
+        {RGBColor[0.368417, 0.506779, 0.709798], PointSize[
+         0.012833333333333334`], AbsoluteThickness[1.6], 
+         PointBox[CompressedData["
+1:eJw90F9IU3EUB/C1WDRTwrq+aF6phzYleqgwXNj3oSQJpDarh5iULvdS4FSC
+MJRejASlXkr6B8XqIRBJIdgolm2pU6ZtLrvTzNjUsbvsId3sDwSd84vdA5fL
+By7fe75nd1OLrVmv0+nM9PD7wX0eL2aCij2ZyqDcftufNb9BtLMhvUL2yt3f
+rB4f2lK9N9jPXNV5insEetMumb1q9dAX7/C0otC/TD50kCeAF6d9l9nXpcET
+8Y73+LM+VswOZM30h1Eca973YYlMYZQ4jvouRw/bxnHWIAaK2k+y/+83gfCr
+Eomd6ODASZg2G9WEtm8I1aUFU+xWXs81hb0G52hC238aO4bz59g6MWFsMxYU
+Lml9wtjjWrnGro3zDyK4YlmVl7V+EdR5PRL3vePnAjNIXuhrSWp9o/hRPFKb
+Ios6ShRKqNSX1vp/xNlAzdp3chmvI89i/Nfv/DWyiPPP4pyh8chPslPMJzwP
+Vr78q91HwQGj6jaoGXCaNKhg6NbjM9vV3L1iaDxftqWEvMFx2RgGngxtKldz
+95tDpGrsbhX5qAicR/xUf1GdmrvnPIYPu2MO8k1er/szMr15li5yhbjvAhxb
+I/2PyNMhngVcMultb8nifK4vqG96PZEki7rSIrIN8sWd6QzEep5FHLfsv1pD
+FnH2r7gXe+jsJP8DPItaRw==
+          "]]}, {}}, {}, {}, {{}, {}}},
+      AspectRatio->NCache[GoldenRatio^(-1), 0.6180339887498948],
+      Axes->{True, True},
+      AxesLabel->{None, None},
+      AxesOrigin->{0.09390625000000001, 1.306837310411048},
+      DisplayFunction->Identity,
+      Frame->{{False, False}, {False, False}},
+      FrameLabel->{{None, None}, {None, None}},
+      FrameTicks->{{Automatic, Automatic}, {Automatic, Automatic}},
+      GridLines->{None, None},
+      GridLinesStyle->Directive[
+        GrayLevel[0.5, 0.4]],
+      ImagePadding->All,
+      ImageSize->400,
+      Method->{"CoordinatesToolOptions" -> {"DisplayFunction" -> ({
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 1, 2][#]& )[
+             Part[#, 1]], 
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 2, 2][#]& )[
+             Part[#, 2]]}& ), "CopiedValueFunction" -> ({
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 1, 2][#]& )[
+             Part[#, 1]], 
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 2, 2][#]& )[
+             Part[#, 2]]}& )}},
+      PlotLabel->FormBox["\"omega=10nbas=10\"", TraditionalForm],
+      PlotRange->{{0.1, 0.49}, {1.3068568907622846`, 1.3072484977870196`}},
+      PlotRangeClipping->True,
+      PlotRangePadding->{{
+         Scaled[0.02], 
+         Scaled[0.02]}, {
+         Scaled[0.05], 
+         Scaled[0.05]}},
+      Ticks->{Automatic, Automatic}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{
+     GraphicsBox[{{}, {{}, 
+        {RGBColor[0.368417, 0.506779, 0.709798], PointSize[
+         0.012833333333333334`], AbsoluteThickness[1.6], 
+         PointBox[CompressedData["
+1:eJw90F9IU3EUB/BLYIQZRS0GPfinPzClPcSioVHfkaKBBG1gGY0imRa+OEGp
+Vj0oTHwRfS0LhaR6SKEk2CCytkk517jLrtM5JzNE73VGVBNyUZ7zE++By+UD
+l+8931PS0OJo3CFJkokefj96yOOHdPlAJLPyG6XO3kDW9BZlu5tdbH+hd9Xu
+e4d9e//uZA+5z+THn77HHrP8epWcsfvoiw94Y5Nusk9aeIKIdPsPs+8ZRmrS
+nhCM5bYljRzMmugP47AOZ4fZFEaJH3Hi0I37bAfH2T8hVXL6IntrvwmU5z0o
+ZS96ODCMsbq2XZq+bwTJ3NyaSm7l9dyf4UIuoer7R/G8cjLGlsTIGDh6RFH1
+PjKW+rUV9vk0/yCG2qhjv6b3i8E2aKhn9wW4wBdcfTUa0PS+U9hYDjm5r6gT
+n0JVtdWS0ft/RWX/k7o1chGvU6jgj/f29HeyiAsoCJvvTP4gN4mZxlD+xIVf
++n3iuGSs8ayTOc0wEsct2de6od9rBi9acvX/yescl51Bx/KxK3nq9v1mEbQO
+DhSQz4rABEaj5msH1e17JjAeUsNF5C5ezzuHcwuW4uPkMnHfJKqaeh5XkKMR
+niQa/7k6a8nifO55FKRk43WyqGtIQfl26lk7WaznS+Fn9eLdXrKIcy5gTOlK
+vyRvAr+rYwk=
+          "]]}, {}}, {}, {}, {{}, {}}},
+      AspectRatio->NCache[GoldenRatio^(-1), 0.6180339887498948],
+      Axes->{True, True},
+      AxesLabel->{None, None},
+      AxesOrigin->{0.09390625000000001, 1.306857196591108},
+      DisplayFunction->Identity,
+      Frame->{{False, False}, {False, False}},
+      FrameLabel->{{None, None}, {None, None}},
+      FrameTicks->{{Automatic, Automatic}, {Automatic, Automatic}},
+      GridLines->{None, None},
+      GridLinesStyle->Directive[
+        GrayLevel[0.5, 0.4]],
+      ImagePadding->All,
+      ImageSize->400,
+      Method->{"CoordinatesToolOptions" -> {"DisplayFunction" -> ({
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 1, 2][#]& )[
+             Part[#, 1]], 
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 2, 2][#]& )[
+             Part[#, 2]]}& ), "CopiedValueFunction" -> ({
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 1, 2][#]& )[
+             Part[#, 1]], 
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 2, 2][#]& )[
+             Part[#, 2]]}& )}},
+      PlotLabel->FormBox["\"omega=11nbas=8\"", TraditionalForm],
+      PlotRange->{{0.1, 0.49}, {1.3068636126592794`, 1.3069919340227036`}},
+      PlotRangeClipping->True,
+      PlotRangePadding->{{
+         Scaled[0.02], 
+         Scaled[0.02]}, {
+         Scaled[0.05], 
+         Scaled[0.05]}},
+      Ticks->{Automatic, Automatic}], ",", 
+     GraphicsBox[{{}, {{}, 
+        {RGBColor[0.368417, 0.506779, 0.709798], PointSize[
+         0.012833333333333334`], AbsoluteThickness[1.6], 
+         PointBox[CompressedData["
+1:eJxTTMoPSmViYGDQAGIQPWsmCOy0Z7x89vmTF1/sNWP6D33V2GPf9/BrA4i/
+U671deCOffYPD8argPhLCmy5ri8+YH98qfDFx0D+m8AdQBUH7d2P6LSB+CbG
+IHDYft3Cm04gfrXIOveHVUfsa6fFs4H4h79qAG04an/um8KFR0A+0DCgicft
+pXcunQ/iB4GMCzxhn8y4vATEh7jvpL2Uv5w/iP+oCmTgKfsVepH6j+DuPWM/
+00VIDMQvBDmv4Kx9ZdwElkdw95+z3/Tz9J+HQD4DGFywL8yZzfgI7p8L9sem
+PgXr93gIsuCi/eYttxwfwf130b7ksFEniD/hEMgDl+w/lhV8fQT372V7ntPq
+E0H+A3vn+mV766tumU/g/r9in1cQ3/sUyJcHOUfuqv0ciw/8z4F8sHGHrtof
+tlzN9hLITwODa/Yxa3d0vYaHz3V7X8UvO94B+SDTRNZdtxfNVtr0CR5eN+xZ
+b8jN/g7kfwMZ9/WG/WfZf3P+wsPvpn3dMtWnLC+/2NuBDbxlz/gidCnvS1h4
+3rJ/NWuZsASQ3wZyXutt+xvbi7NUgHwtcPjesTf2tnphBOSfOwMCd+zn+6Wc
+dwbywcFXcNe+7gFTWjiQD/auyD37Z3FlX3OBfLDzdtyzV5VnOdUO5IONi7lv
+/3trpNFSIB8AAvtiZw==
+          "]]}, {}}, {}, {}, {{}, {}}},
+      AspectRatio->NCache[GoldenRatio^(-1), 0.6180339887498948],
+      Axes->{True, True},
+      AxesLabel->{None, None},
+      AxesOrigin->{0.09390625000000001, 1.3068497148131635`},
+      DisplayFunction->Identity,
+      Frame->{{False, False}, {False, False}},
+      FrameLabel->{{None, None}, {None, None}},
+      FrameTicks->{{Automatic, Automatic}, {Automatic, Automatic}},
+      GridLines->{None, None},
+      GridLinesStyle->Directive[
+        GrayLevel[0.5, 0.4]],
+      ImagePadding->All,
+      ImageSize->400,
+      Method->{"CoordinatesToolOptions" -> {"DisplayFunction" -> ({
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 1, 2][#]& )[
+             Part[#, 1]], 
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 2, 2][#]& )[
+             Part[#, 2]]}& ), "CopiedValueFunction" -> ({
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 1, 2][#]& )[
+             Part[#, 1]], 
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 2, 2][#]& )[
+             Part[#, 2]]}& )}},
+      PlotLabel->FormBox["\"omega=11nbas=10\"", TraditionalForm],
+      PlotRange->{{0.1, 0.49}, {1.306856143462579, 1.3069847164508834`}},
+      PlotRangeClipping->True,
+      PlotRangePadding->{{
+         Scaled[0.02], 
+         Scaled[0.02]}, {
+         Scaled[0.05], 
+         Scaled[0.05]}},
+      Ticks->{Automatic, Automatic}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{
+     GraphicsBox[{{}, {{}, 
+        {RGBColor[0.368417, 0.506779, 0.709798], PointSize[
+         0.012833333333333334`], AbsoluteThickness[1.6], 
+         PointBox[CompressedData["
+1:eJw90F1IU3EYBvBTAwsHQWMSKCoR2Oqi6EsorIcmmFlEZxddLQIpb8xaRl0o
+YrFWN1G7sC9BDSyKCKGi2FKHzaRmm25OO2tuqxXIOW5EhRMqkd73H/xfOBx+
+cHjO+7zrG886Tq1UFMVGD7+77/H4UX/lkD2nL2CT82awYBtCw/zxpXmyv8KT
+U30BXJ7sHGQ/cO0t1vpHUBQr62TnVR998QZ/e1/UsXfu4BnFMTW9lt1uHTiQ
+bXuL1Rb7F4M8WrDRH8aQbel5xqYwSnyHJyeGPWwHx6nvcbLL7WT/3y+EjEff
+xf7axoHjqFxSLIbcN4xAc9FPnXyO13NFELrRGNfl/hP44w742YqYKLY+L3mo
+yz5RDN8P32bXZ/kHMaS/ffDqsl8MK6r6brG9QS4wBeeeu4912TeOhGkxwhZ1
+tDieamvMhuw/jZF0RxO7ktepmMHRiENni7jgDOy1td18ryYxH2FMpa7l5H00
++JKvAnkyp1kHNIxb+498l/dKoDo6e/AHeZHjCgnsHtwy9kve7xMebdyQKJD3
+icAkLrwu7fkt75nEJXfztmXyVV7PM4vz11tfmowFbBb3TWGdqfdwMXkizJNC
+sOZMuYUszudKI5k/rZaRRV1rBuZVpSVVZLGeL4Ouucid7WQR5/yMuote837y
+P/KrZZU=
+          "]]}, {}}, {}, {}, {{}, {}}},
+      AspectRatio->NCache[GoldenRatio^(-1), 0.6180339887498948],
+      Axes->{True, True},
+      AxesLabel->{None, None},
+      AxesOrigin->{0.09390625000000001, 1.3068598557481386`},
+      DisplayFunction->Identity,
+      Frame->{{False, False}, {False, False}},
+      FrameLabel->{{None, None}, {None, None}},
+      FrameTicks->{{Automatic, Automatic}, {Automatic, Automatic}},
+      GridLines->{None, None},
+      GridLinesStyle->Directive[
+        GrayLevel[0.5, 0.4]],
+      ImagePadding->All,
+      ImageSize->400,
+      Method->{"CoordinatesToolOptions" -> {"DisplayFunction" -> ({
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 1, 2][#]& )[
+             Part[#, 1]], 
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 2, 2][#]& )[
+             Part[#, 2]]}& ), "CopiedValueFunction" -> ({
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 1, 2][#]& )[
+             Part[#, 1]], 
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 2, 2][#]& )[
+             Part[#, 2]]}& )}},
+      PlotLabel->FormBox["\"omega=12nbas=8\"", TraditionalForm],
+      PlotRange->{{0.1, 0.49}, {1.3068624168502005`, 1.3069136388914435`}},
+      PlotRangeClipping->True,
+      PlotRangePadding->{{
+         Scaled[0.02], 
+         Scaled[0.02]}, {
+         Scaled[0.05], 
+         Scaled[0.05]}},
+      Ticks->{Automatic, Automatic}], ",", 
+     GraphicsBox[{{}, {{}, 
+        {RGBColor[0.368417, 0.506779, 0.709798], PointSize[
+         0.012833333333333334`], AbsoluteThickness[1.6], 
+         PointBox[CompressedData["
+1:eJw90F1IU3EYBvDD6CIGXUiLIcT6hE7DxOwDurAnwtQrYyvoRskkvagLZzoo
+S4hg1l2R3ayoQQti+EHRhZPV0FmUn235sdM8rnM8UssykJxkRvS+/+D/wuHw
+g8Nz3ufdUd/kbbApiqLSw+/7QZ5+dOy8UmvlVrC35nYir77E8KtWJ7vfFfjm
+icbRMtc6M09+4iuzp8MD8O9aCLK/e6L0xSAu3io/xz54gGcIm6JFReyrjt5K
+s+01CmIVv03yUF6lP7xBrvzkKJvCKPEtCmNbQmwvx3neoczf7mf/328Yl1PX
+q9nzbRw4gtruw25T7jsG7/PMRnYzr+cbh25oi4bcfwL7g3qSrYhJ4lKdFTNk
+nyTij0/1sKtM/kEKxQHnU0P2S+GQFuti30lwgQ9QnJ1xQ/adROEx3WKLOulJ
+fCle2m7K/lNo/3X2Gnsbr+OaRjxy/C9bxCWmkQ1XPeN7NYqZgdr356El75NG
+34afUwtkTnP0prHn0dr5z/JeGs68r6jLkVc5Lq/h5lp4dlHe7yNCuc4fS+Sj
+IjAD7W7Li2V5zwwiuFe5Su7g9QKzaN5dPbpOdov76nA9sNfbvq5gYoxHx4WS
+E6V2sjifbw7d1o2GzWRR15GFrQCqiyzWi2ZxOjQecZNFXM0nLO8r3XqE/A+V
+rWVq
+          "]]}, {}}, {}, {}, {{}, {}}},
+      AspectRatio->NCache[GoldenRatio^(-1), 0.6180339887498948],
+      Axes->{True, True},
+      AxesLabel->{None, None},
+      AxesOrigin->{0.09390625000000001, 1.3068523093633697`},
+      DisplayFunction->Identity,
+      Frame->{{False, False}, {False, False}},
+      FrameLabel->{{None, None}, {None, None}},
+      FrameTicks->{{Automatic, Automatic}, {Automatic, Automatic}},
+      GridLines->{None, None},
+      GridLinesStyle->Directive[
+        GrayLevel[0.5, 0.4]],
+      ImagePadding->All,
+      ImageSize->400,
+      Method->{"CoordinatesToolOptions" -> {"DisplayFunction" -> ({
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 1, 2][#]& )[
+             Part[#, 1]], 
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 2, 2][#]& )[
+             Part[#, 2]]}& ), "CopiedValueFunction" -> ({
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 1, 2][#]& )[
+             Part[#, 1]], 
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 2, 2][#]& )[
+             Part[#, 2]]}& )}},
+      PlotLabel->FormBox["\"omega=12nbas=10\"", TraditionalForm],
+      PlotRange->{{0.1, 0.49}, {1.3068548705126193`, 1.3069060934976167`}},
+      PlotRangeClipping->True,
+      PlotRangePadding->{{
+         Scaled[0.02], 
+         Scaled[0.02]}, {
+         Scaled[0.05], 
+         Scaled[0.05]}},
+      Ticks->{Automatic, Automatic}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{
+     GraphicsBox[{{}, {{}, 
+        {RGBColor[0.368417, 0.506779, 0.709798], PointSize[
+         0.012833333333333334`], AbsoluteThickness[1.6], 
+         PointBox[CompressedData["
+1:eJxF0F1IU2EYB/CDXSlYYhO8MEuxmkYitIsI5h/1ws+bs4oUhom0BkN00oWw
+0rxwfl4oEorihVBEYzCiqwkpeab4gQ2n6XRtyvLmdVYoboaB4fu8wtsDh8MP
+Dv/z/J+cxhaTJUlRFD1/6D0+RjMF35OBjhiLI988qCX0n+Fq95WRp7KdB6p3
+BmPmvVTyO7sxJfj2CyYfN4X3uX+qXv7FLJJexDxkwz0aH2otiS7yS52nPOqY
+Q8anonqyL6Hnf5hHbmr1AzIP44kLGLWeZZJNFKcu4kxN+cu4L/ZbgvFucYT8
+w0GBy3j6yq4xue8K7g91u8ittJ79KyZm2oaZ3N+PD3UP28mKmFVsTlbYmOyz
+ihz2sY5cEaUfBFBdmFXDZL8AjkwNpeQhjQqswX/FbWSy7zrWFkZAFnWC68i7
+U1rFZP9vsI7bGsjXaZ3sDdiu9TnJIk7bwID7aJr8XMwmHjXHL/+/TxAdw8pr
+MqXpPEEE9IsZMXmvLdzufRYmn1BcYgtZbxyRA3m/bbSW1N/8xV0sAkPocRm0
+3/KeIcyfXp075O6m9Zzfcdh3w3jMXSDuG0ab5X3JCbd/hSaM3ZFCdsotzmeP
+IL1/sPIft6ir28F29E/npf04xHreHai3jt3J3CLOvAvvtDWWxn0OEFBk9Q==
+
+          "]]}, {}}, {}, {}, {{}, {}}},
+      AspectRatio->NCache[GoldenRatio^(-1), 0.6180339887498948],
+      Axes->{True, True},
+      AxesLabel->{None, None},
+      AxesOrigin->{0.09390625000000001, 1.3068611006181616`},
+      DisplayFunction->Identity,
+      Frame->{{False, False}, {False, False}},
+      FrameLabel->{{None, None}, {None, None}},
+      FrameTicks->{{Automatic, Automatic}, {Automatic, Automatic}},
+      GridLines->{None, None},
+      GridLinesStyle->Directive[
+        GrayLevel[0.5, 0.4]],
+      ImagePadding->All,
+      ImageSize->400,
+      Method->{"CoordinatesToolOptions" -> {"DisplayFunction" -> ({
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 1, 2][#]& )[
+             Part[#, 1]], 
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 2, 2][#]& )[
+             Part[#, 2]]}& ), "CopiedValueFunction" -> ({
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 1, 2][#]& )[
+             Part[#, 1]], 
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 2, 2][#]& )[
+             Part[#, 2]]}& )}},
+      PlotLabel->FormBox["\"omega=13nbas=8\"", TraditionalForm],
+      PlotRange->{{0.1, 0.49}, {1.3068621071733904`, 1.3068822382779683`}},
+      PlotRangeClipping->True,
+      PlotRangePadding->{{
+         Scaled[0.02], 
+         Scaled[0.02]}, {
+         Scaled[0.05], 
+         Scaled[0.05]}},
+      Ticks->{Automatic, Automatic}], ",", 
+     GraphicsBox[{{}, {{}, 
+        {RGBColor[0.368417, 0.506779, 0.709798], PointSize[
+         0.012833333333333334`], AbsoluteThickness[1.6], 
+         PointBox[CompressedData["
+1:eJxF0F9IU2EYBvBTCFZ6I+2mhIneOK0bswsR9AFRFhHCVDCaEK5ciagbIsSE
+XYibN252McRGYJl0UaB3NkXEzUV/WIeZri3/zG+TlTGT0k0EwfreL/h64XD4
+weE57/MWm3qbOs4qiqLjD729T2jm4HdqniZ3MyhrGw1kdQu4NLHYTp7TOtIG
+3yI6Xc1XyVOWmgvRF0uw7bWcJLj3DD7+hR/n5xtV8vVKmmXM34pNkQc00/qE
+LYj0oMdOXs7q+B/eYqakwkjmYTzxHY5/d1STmyjO8B6pkkwh+d9+H5DrfvmH
+cSdtFPgRo/nNKSb3DeHwylaIbKX1LJ9Q0V09y+T+Klz1j56TFTFhmC8G3Uz2
+CYO19tvJNxL0gxXM3rxsZbLfCrSFww/IjwNU4DN60t9NTPZdhe9Z5D5Z1Imu
+wjzU3ctk/zXoJ7sc5CJaRxtB8I3+FVnEBSLI62tJks1ivsD6ml37f58ofpXe
+mSRTmmY6iv1+a1VS3iuGnLraU/IRxWVjiI/dO92R9/sKp7GyIcVdKwLXMWEK
+s2/ynutwtzYmdrmdtJ5jA6419Xaau1zcdxNDP73GfW41RLOJgL1KOeAW57Ns
+ocxju3vELepq4lDrRzwn3GI9Xxz+h9mFMz8yEHFt2yjwjh+f4/4LFlFpjg==
+
+          "]]}, {}}, {}, {}, {{}, {}}},
+      AspectRatio->NCache[GoldenRatio^(-1), 0.6180339887498948],
+      Axes->{True, True},
+      AxesLabel->{None, None},
+      AxesOrigin->{0.09390625000000001, 1.306853613609498},
+      DisplayFunction->Identity,
+      Frame->{{False, False}, {False, False}},
+      FrameLabel->{{None, None}, {None, None}},
+      FrameTicks->{{Automatic, Automatic}, {Automatic, Automatic}},
+      GridLines->{None, None},
+      GridLinesStyle->Directive[
+        GrayLevel[0.5, 0.4]],
+      ImagePadding->All,
+      ImageSize->400,
+      Method->{"CoordinatesToolOptions" -> {"DisplayFunction" -> ({
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 1, 2][#]& )[
+             Part[#, 1]], 
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 2, 2][#]& )[
+             Part[#, 2]]}& ), "CopiedValueFunction" -> ({
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 1, 2][#]& )[
+             Part[#, 1]], 
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 2, 2][#]& )[
+             Part[#, 2]]}& )}},
+      PlotLabel->FormBox["\"omega=13nbas=10\"", TraditionalForm],
+      PlotRange->{{0.1, 0.49}, {1.3068546165001993`, 1.306874674314228}},
+      PlotRangeClipping->True,
+      PlotRangePadding->{{
+         Scaled[0.02], 
+         Scaled[0.02]}, {
+         Scaled[0.05], 
+         Scaled[0.05]}},
+      Ticks->{Automatic, Automatic}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{
+     GraphicsBox[{{}, {{}, 
+        {RGBColor[0.368417, 0.506779, 0.709798], PointSize[
+         0.012833333333333334`], AbsoluteThickness[1.6], 
+         PointBox[CompressedData["
+1:eJxF0V1IU3EYBvDDpCCvQiZRyKJVtBWlYTch7umiSC9nkEF2E7kuFDxCUChd
+xJqBNw26SuiiMruxQ0EfE/rQfaSGrumyrTXnToH/6Vb04QQlov/zD44vjMMP
+xnPe5z27zne1tNs0TXPJH58DtzkjuLrufrJUWIG77Wa47HqJ6/6tfnrEESh6
+Q68R/ek+Qw/qjZWp+6N49MtZR5e8IfmPMTgiTyvpI/WcCCouDoqCdK/dOGn2
+RBEcH31LR8ou+YYYbP78Q1qGycRx1OzN99MtjPNOoKPmbhf9f79JZDq3nKa/
+9DDwHar/VHgK1r5TMFqv7aO7uZ4+jWLpSlXB2j+OB7Hlv0JaU5OAZ8UsCatP
+Am8WL2fpJpMvmMGphfS0sPrNYPZ98xgdDLPALNYTtS+E1TeJpvbtj2lVJ5XE
+q+HJYWH1/4DAvRMGvZPrOObg1L8+o1VceA4ieTZG+9R8xMH++Zyw7pPC8wHn
+JvZhmt1IQZy70bBxrzR0bXcfvcq4chqHj5lLG/f7hANVdzr5fTwqMINt6Ybq
+ZeueGeyIThTpPq4X+IwhW3CtKL1f3TeLC41Hm79Jx6c4Wfg2m4vfpdX59Hn4
+QnX5H9Kqrj2HeOul47+l1XqhHA5pxp5VaRXXtoDajqFba9L/AEIcbAE=
+          
+          "]]}, {}}, {}, {}, {{}, {}}},
+      AspectRatio->NCache[GoldenRatio^(-1), 0.6180339887498948],
+      Axes->{True, True},
+      AxesLabel->{None, None},
+      AxesOrigin->{0.09390625000000001, 1.3068611873539315`},
+      DisplayFunction->Identity,
+      Frame->{{False, False}, {False, False}},
+      FrameLabel->{{None, None}, {None, None}},
+      FrameTicks->{{Automatic, Automatic}, {Automatic, Automatic}},
+      GridLines->{None, None},
+      GridLinesStyle->Directive[
+        GrayLevel[0.5, 0.4]],
+      ImagePadding->All,
+      ImageSize->400,
+      Method->{"CoordinatesToolOptions" -> {"DisplayFunction" -> ({
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 1, 2][#]& )[
+             Part[#, 1]], 
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 2, 2][#]& )[
+             Part[#, 2]]}& ), "CopiedValueFunction" -> ({
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 1, 2][#]& )[
+             Part[#, 1]], 
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 2, 2][#]& )[
+             Part[#, 2]]}& )}},
+      PlotLabel->FormBox["\"omega=14nbas=8\"", TraditionalForm],
+      PlotRange->{{0.1, 0.49}, {1.3068615674517752`, 1.306869169408651}},
+      PlotRangeClipping->True,
+      PlotRangePadding->{{
+         Scaled[0.02], 
+         Scaled[0.02]}, {
+         Scaled[0.05], 
+         Scaled[0.05]}},
+      Ticks->{Automatic, Automatic}], ",", 
+     GraphicsBox[{{}, {{}, 
+        {RGBColor[0.368417, 0.506779, 0.709798], PointSize[
+         0.012833333333333334`], AbsoluteThickness[1.6], 
+         PointBox[CompressedData["
+1:eJxF0F1IU2EYB/Ahip/RwoGaudVFOU3xwiK6sD+CYBcN2qQmMW8UvbFwikJM
+kCJmBIZDurELERKUkAkReiYSczO/2Ia66VlqOzt+oLkQsiZ0E77PG7w+MA4/
+2Pmf//Nca2yzNKdoNBoj+9Hz/SCNB28fPQyph39QYuv3JY0z8A9UDZM9emfC
+LH2Bvqm+izxir8qSP3hRP2oykX+aJfaPWVhT5WLyrUoaP6x506nkbp27VnXM
+Iema340z+5NG9oWv0KZE5sgsjCUuIOOSd5RsoTjzIi63Pusj/++3hPIOfwd5
+x0GBy+h55X4SF30DSJu6WkNup3r2IAwXcyvion8I6s3XhWQNnxXcGH+TGRf7
+rGCs8/Zfhfm+Sh9YRdYV6UgR+62ieNoaI7t8tMAaDuscEUXsG0a1biJI5uvI
+YaQ/9ywrYv8Igs6hANlAdfTr6C36zN/ncb51vGj4tEdu4bOB/JyFf4q4j4yC
+g4/XqS+l6dwyKscl2/m9olgaThsjn1JcMgpHXXeOKu73Ddm1J/3kezxwE4ky
+090dcc9NeE3vtLvMvVTPuYXolNawx1zK77uNx/MtbfvMoQDNNiyuiQsHzPx8
+9u/wBlzpP5j5uroYIpOWpwlmXk+KYbLn94NjZh5nU/AyfGfmF/MZXP9iwQ==
+
+          "]]}, {}}, {}, {}, {{}, {}}},
+      AspectRatio->NCache[GoldenRatio^(-1), 0.6180339887498948],
+      Axes->{True, True},
+      AxesLabel->{None, None},
+      AxesOrigin->{0.09390625000000001, 1.3068536666801334`},
+      DisplayFunction->Identity,
+      Frame->{{False, False}, {False, False}},
+      FrameLabel->{{None, None}, {None, None}},
+      FrameTicks->{{Automatic, Automatic}, {Automatic, Automatic}},
+      GridLines->{None, None},
+      GridLinesStyle->Directive[
+        GrayLevel[0.5, 0.4]],
+      ImagePadding->All,
+      ImageSize->400,
+      Method->{"CoordinatesToolOptions" -> {"DisplayFunction" -> ({
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 1, 2][#]& )[
+             Part[#, 1]], 
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 2, 2][#]& )[
+             Part[#, 2]]}& ), "CopiedValueFunction" -> ({
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 1, 2][#]& )[
+             Part[#, 1]], 
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 2, 2][#]& )[
+             Part[#, 2]]}& )}},
+      PlotLabel->FormBox["\"omega=14nbas=10\"", TraditionalForm],
+      PlotRange->{{0.1, 0.49}, {1.306854049580126, 1.3068617075799764`}},
+      PlotRangeClipping->True,
+      PlotRangePadding->{{
+         Scaled[0.02], 
+         Scaled[0.02]}, {
+         Scaled[0.05], 
+         Scaled[0.05]}},
+      Ticks->{Automatic, Automatic}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{
+     GraphicsBox[{{}, {{}, 
+        {RGBColor[0.368417, 0.506779, 0.709798], PointSize[
+         0.012833333333333334`], AbsoluteThickness[1.6], 
+         PointBox[CompressedData["
+1:eJxF0V9IU2EYBvBDf5CEXQxWQdRmdLNaN5IXedGexIu6yw0pglGQFViWxyQt
+I7yaESJFf8nIC5UgCzPoYoJpHc1Mt6GpHdOprYRvOSPDJpQRfc8XfL0wDj8Y
+z3mf92w9Vh48scowDK/88dl4j9MJZ31T3pfUD2wPXbMy3i6MOYWD7nSH04FI
+N5b6HfMp6VZzT7bd8hJPHUMD9EIgIv/xCpc3fnxE5+3i9MJ9Z30DfcnVvi9Z
+04cr6fxzdG/GK9/wGltinsO0DJOJb9DS/KCADjIuMIBBs8FH/9vvLYJGbAP9
+qYaBgyh2+Fen9L5R/K7sXxTSFVzPjGGnWTQr9P5xtLmG4rShZhhVOb4eofsM
+Y1txWQe9P8kXjCC75Gaz0P1G8P1ux236usUC7xAq/HxV6L6j+LXuSC2t6tij
+yPKVVQndfwwH7Opy2sN13OPIeeY8Tas4axwl9T9L6ZNq3mPuoveM0PexkfIn
+ztNMc7XbuLCpNSz0vSawuHy2iV5mXGYCbXONltD3+4AX0bUZ2q8CJ9G125P/
+/56TOLhm5QZdx/XCU/jTdzyL33+Hum8Cz58s3afjUU4CUw/dh+al1fnMaVSW
+Fu1NS6u6rhl0564cXZBW60VmcCv5uOertIoLzcLK3Xzqm/RfPpBosQ==
+          
+          "]]}, {}}, {}, {}, {{}, {}}},
+      AspectRatio->NCache[GoldenRatio^(-1), 0.6180339887498948],
+      Axes->{True, True},
+      AxesLabel->{None, None},
+      AxesOrigin->{0.09390625000000001, 1.3068611289867975`},
+      DisplayFunction->Identity,
+      Frame->{{False, False}, {False, False}},
+      FrameLabel->{{None, None}, {None, None}},
+      FrameTicks->{{Automatic, Automatic}, {Automatic, Automatic}},
+      GridLines->{None, None},
+      GridLinesStyle->Directive[
+        GrayLevel[0.5, 0.4]],
+      ImagePadding->All,
+      ImageSize->400,
+      Method->{"CoordinatesToolOptions" -> {"DisplayFunction" -> ({
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 1, 2][#]& )[
+             Part[#, 1]], 
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 2, 2][#]& )[
+             Part[#, 2]]}& ), "CopiedValueFunction" -> ({
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 1, 2][#]& )[
+             Part[#, 1]], 
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 2, 2][#]& )[
+             Part[#, 2]]}& )}},
+      PlotLabel->FormBox["\"omega=15nbas=8\"", TraditionalForm],
+      PlotRange->{{0.1, 0.49}, {1.3068613185539213`, 1.3068651098963986`}},
+      PlotRangeClipping->True,
+      PlotRangePadding->{{
+         Scaled[0.02], 
+         Scaled[0.02]}, {
+         Scaled[0.05], 
+         Scaled[0.05]}},
+      Ticks->{Automatic, Automatic}], ",", 
+     GraphicsBox[{{}, {{}, 
+        {RGBColor[0.368417, 0.506779, 0.709798], PointSize[
+         0.012833333333333334`], AbsoluteThickness[1.6], 
+         PointBox[CompressedData["
+1:eJxF0U9Ik2EcB/ClRP/o0FgUDZRAaEoklFAg83srA0NmEB2EZKFFh5ynyA5Z
+4BQPW23Rn0UWuENQecjLjMics6as8a5p07n27J2Vi3WJ2rr2fJ/g6Qfj5QPj
++/6+v3e/u7+rt8ZisTjkj8/QA840Fu07T5ul32js9kcrjtf4M3v/ID1dN1x2
+Rd6gN1+7jQ57nNszE29xqnZLqSD9wxWR/5jF8b7zC3TLEc4cxgPmc/qabfKE
+ORiD90lngJ6rOOQb5uEoXr9KyzCZ+B72jnY33cU4VxyFCzc76H/7LcB3Y8cx
+ujjIwEWs52INBb1vAvGNoJUe4HqeD7ANuTcV9P5JnB2o/ymkLWoM7HXNmEL3
+MTCTdabpdpMvSOHet8fzQvdLIWGtRuhbURb4CHtLzwuh+6bRGd41Qas6mTSa
+vWdCQvdfwu09oSBdz3XqlmFtuuynVVx0GVtXgz66T80nHPJvDgh9nwxeXqx5
+SDPNNpnBneq+Z0LfawVXziFGVxlXWcEBI1kS+n6rONzw1M57tKnALIxwa8//
+e2axe+rRK9rL9YbX8K4x1Mzv3aTum8NaazxGJxOcHPy+8aGitDqf5zOOnhy5
+tC6t6tryMFK/xr5Iq/UieTjL/eWv0iquW2D0+9TdDem/vQlmmg==
+          
+          "]]}, {}}, {}, {}, {{}, {}}},
+      AspectRatio->NCache[GoldenRatio^(-1), 0.6180339887498948],
+      Axes->{True, True},
+      AxesLabel->{None, None},
+      AxesOrigin->{0.09390625000000001, 1.3068536370482313`},
+      DisplayFunction->Identity,
+      Frame->{{False, False}, {False, False}},
+      FrameLabel->{{None, None}, {None, None}},
+      FrameTicks->{{Automatic, Automatic}, {Automatic, Automatic}},
+      GridLines->{None, None},
+      GridLinesStyle->Directive[
+        GrayLevel[0.5, 0.4]],
+      ImagePadding->All,
+      ImageSize->400,
+      Method->{"CoordinatesToolOptions" -> {"DisplayFunction" -> ({
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 1, 2][#]& )[
+             Part[#, 1]], 
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 2, 2][#]& )[
+             Part[#, 2]]}& ), "CopiedValueFunction" -> ({
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 1, 2][#]& )[
+             Part[#, 1]], 
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 2, 2][#]& )[
+             Part[#, 2]]}& )}},
+      PlotLabel->FormBox["\"omega=15nbas=10\"", TraditionalForm],
+      PlotRange->{{0.1, 0.49}, {1.3068538255152493`, 1.3068575948556127`}},
+      PlotRangeClipping->True,
+      PlotRangePadding->{{
+         Scaled[0.02], 
+         Scaled[0.02]}, {
+         Scaled[0.05], 
+         Scaled[0.05]}},
+      Ticks->{Automatic, Automatic}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{
+     GraphicsBox[{{}, {{}, 
+        {RGBColor[0.368417, 0.506779, 0.709798], PointSize[
+         0.012833333333333334`], AbsoluteThickness[1.6], 
+         PointBox[CompressedData["
+1:eJxF0V1IU3EYBvCVaCRdLgqEjQLzaOFNCgbO58LJRCnariQGUjOLblygXigp
+Fg4KwW8lCVSMBQYiRLqZZG3G8qOhW3o2PyaKcDS/AlsXeeN5/sHZC+Pwg/Gc
+93nPlQdVtodndTqdpP747HvN8eKiNTC5s/MHmfZWX1yaxGBR+Rvaa2jes3o+
+413N1Qb6rdOUKg99QfJW7D69b/Wo//iK6rInFjrnJsePF9JANl2vH7Fs1k3D
+X11+ifbHJfUN3zBR++oMrYapiQFk3Us5UFTbGGf9DmPepyj9f78Z2I86A/RW
+HQNn4Q4/G1O0fecRuvPYTT/les4f6Oky9yra/kGcNCW/pHViFjAx1l+vaH0W
+MPz7fBVdvMkXLGJ/1ORQtH6LmM7NK6PbfCwQwnjk5Lai9Q3Dvd1upkUdOYzr
+/y7kK1r/nzi83JJDG7mOYQlzjoJsWsT5llD04VEmXSlmGa6UymuKdh8Z3o3x
+dJpp+hEZpV1JUuJeEdR0G0XeX8bFI9gbTbuVuF8UU+bSErpABK5Att91JO65
+gsL3GS7axfWaVxGy5H6ks8R91/DcYDumg/OcNTQeRQv5/cT5nOs4N+UdpkVd
+fQzbrQ03dlWL9TwxdJgqgrSIs2/goKSi55fqU9DEZfA=
+          
+          "]]}, {}}, {}, {}, {{}, {}}},
+      AspectRatio->NCache[GoldenRatio^(-1), 0.6180339887498948],
+      Axes->{True, True},
+      AxesLabel->{None, None},
+      AxesOrigin->{0.09390625000000001, 1.3068609002403244`},
+      DisplayFunction->Identity,
+      Frame->{{False, False}, {False, False}},
+      FrameLabel->{{None, None}, {None, None}},
+      FrameTicks->{{Automatic, Automatic}, {Automatic, Automatic}},
+      GridLines->{None, None},
+      GridLinesStyle->Directive[
+        GrayLevel[0.5, 0.4]],
+      ImagePadding->All,
+      ImageSize->400,
+      Method->{"CoordinatesToolOptions" -> {"DisplayFunction" -> ({
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 1, 2][#]& )[
+             Part[#, 1]], 
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 2, 2][#]& )[
+             Part[#, 2]]}& ), "CopiedValueFunction" -> ({
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 1, 2][#]& )[
+             Part[#, 1]], 
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 2, 2][#]& )[
+             Part[#, 2]]}& )}},
+      PlotLabel->FormBox["\"omega=16nbas=8\"", TraditionalForm],
+      PlotRange->{{0.1, 0.49}, {1.3068610642785485`, 1.3068643450430344`}},
+      PlotRangeClipping->True,
+      PlotRangePadding->{{
+         Scaled[0.02], 
+         Scaled[0.02]}, {
+         Scaled[0.05], 
+         Scaled[0.05]}},
+      Ticks->{Automatic, Automatic}], ",", 
+     GraphicsBox[{{}, {{}, 
+        {RGBColor[0.368417, 0.506779, 0.709798], PointSize[
+         0.012833333333333334`], AbsoluteThickness[1.6], 
+         PointBox[CompressedData["
+1:eJxFkVFIk1EAhUfsydSnpULg9EGYYS+ZEZodK9ESdGwQgSwQSxEmtrBirpcy
+FoKgPkSUSlAaBsGeJCea5NYow41tun6d0+uEqaCYYAvzqf/c4PfAz88Hl3PP
+Obew+Z615YROpzOpH/+Dr6lJPDi8tbK+/RvFtn5f2jSNCXFyijyZ796xeGeQ
+iGwPk0cdlRnKyBcosekn5F2LVz0xi+Xw7Vby+VLKjw6M1ZMfGzy1SddXlPc4
+L5D9aZN6QwAHl8YLyKqZ6vgN9l/IJFtpZ/mOF0X6v0Ll//nmoC/Z3SRvuGj4
+A+dmUzGh5Z1H3vh6gHyf8RxBDLwMfRJa/hC6ht59IOukwujyWIaE1icMezDa
+R76e5AURnP1ofCa0fhEYx8qc5AEfC0RxtTi3Q2h9F3D0KHiXLOsoC0jl2G1C
+67+IN/Hsm2Qj4+THUDi61UCWdr4Yso4u1pFbpX5i39VUK7R9FBxUJGrIdDN4
+FOC09YbQ9lpCQ8YrM/kP7dJL8Js/Nx7vt4zolKGdfFkaxvE0APfxnnHkdpfL
+fZ4znnsFVXfaFPIZuW8CD0fenuL7hOapBN5fuyLfW87nWEW/szRIlnUNa+ht
+1puTKst43jUYU3v7ZGlnE6ju3PFuqPwP0upoXg==
+          
+          "]]}, {}}, {}, {}, {{}, {}}},
+      AspectRatio->NCache[GoldenRatio^(-1), 0.6180339887498948],
+      Axes->{True, True},
+      AxesLabel->{None, None},
+      AxesOrigin->{0.09390625000000001, 1.3068533940513354`},
+      DisplayFunction->Identity,
+      Frame->{{False, False}, {False, False}},
+      FrameLabel->{{None, None}, {None, None}},
+      FrameTicks->{{Automatic, Automatic}, {Automatic, Automatic}},
+      GridLines->{None, None},
+      GridLinesStyle->Directive[
+        GrayLevel[0.5, 0.4]],
+      ImagePadding->All,
+      ImageSize->400,
+      Method->{"CoordinatesToolOptions" -> {"DisplayFunction" -> ({
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 1, 2][#]& )[
+             Part[#, 1]], 
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 2, 2][#]& )[
+             Part[#, 2]]}& ), "CopiedValueFunction" -> ({
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 1, 2][#]& )[
+             Part[#, 1]], 
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 2, 2][#]& )[
+             Part[#, 2]]}& )}},
+      PlotLabel->FormBox["\"omega=16nbas=10\"", TraditionalForm],
+      PlotRange->{{0.1, 0.49}, {1.3068535583477086`, 1.306856844275175}},
+      PlotRangeClipping->True,
+      PlotRangePadding->{{
+         Scaled[0.02], 
+         Scaled[0.02]}, {
+         Scaled[0.05], 
+         Scaled[0.05]}},
+      Ticks->{Automatic, Automatic}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{
+     GraphicsBox[{{}, {{}, 
+        {RGBColor[0.368417, 0.506779, 0.709798], PointSize[
+         0.012833333333333334`], AbsoluteThickness[1.6], 
+         PointBox[CompressedData["
+1:eJxTTMoPSmViYGDQAGIQPWsmCOy051kjlPHixRd7zZj+Q1819tiv5Y31AfF3
+yrW+Dtyxz35yS58RiL+kwJbr+uID9vNKa6RA/DeBO4AqDtq/OMPAAuKbGIPA
+Yfuuwh/vngP51SLr3B9WHbHXe+p0G8Q//FUDaMNR+0fNh06A+EDDgCYet8/d
+FbMdxA8CGRd4wn7py5/LQHyI+07am7K3TgfxH1WBDDxlz6r/uuM53L1n7Fn9
+patB/EKQ8wrO2nv/Y817Dnf/OfvqmrmJID4DGFyw/3v2auhzuH8u2Ku+XuIF
+4ns8BFlw0X7OPyaH53D/XbQ/sO2VKYg/4RDIA5fsczdH6jyH+/ey/XnZQGUQ
+H+yd65fttaquSSH8f8X+5pEvQiC+PMg5clftvd7s5QbxwcYdumq/dacPK4if
+BgbX7FdYHf//DB4+1+037Er8DeKDTBNZd93eKy7pxzN4eN2wN8pW/Q7ifwMZ
+9/WGfZenElgeEn437Te6fgTrtwMbeMs+SjyIGRGet+yb9Yz5Qfw2kPNab9ur
+Ht6pAOJrgcP3jr3VAi9LEP/cGRC4Y79h3uQoEB8cfAV37R8emNoG4oO9K3LP
+PvX2+v0gPth5O+7Zp2xZyQFKH2DjYu7bZ9TvTwHxAaV9aIw=
+          
+          "]]}, {}}, {}, {}, {{}, {}}},
+      AspectRatio->NCache[GoldenRatio^(-1), 0.6180339887498948],
+      Axes->{True, True},
+      AxesLabel->{None, None},
+      AxesOrigin->{0.09390625000000001, 1.3068608220660254`},
+      DisplayFunction->Identity,
+      Frame->{{False, False}, {False, False}},
+      FrameLabel->{{None, None}, {None, None}},
+      FrameTicks->{{Automatic, Automatic}, {Automatic, Automatic}},
+      GridLines->{None, None},
+      GridLinesStyle->Directive[
+        GrayLevel[0.5, 0.4]],
+      ImagePadding->All,
+      ImageSize->400,
+      Method->{"CoordinatesToolOptions" -> {"DisplayFunction" -> ({
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 1, 2][#]& )[
+             Part[#, 1]], 
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 2, 2][#]& )[
+             Part[#, 2]]}& ), "CopiedValueFunction" -> ({
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 1, 2][#]& )[
+             Part[#, 1]], 
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 2, 2][#]& )[
+             Part[#, 2]]}& )}},
+      PlotLabel->FormBox["\"omega=17nbas=8\"", TraditionalForm],
+      PlotRange->{{0.1, 0.49}, {1.3068608907839914`, 1.3068622651433115`}},
+      PlotRangeClipping->True,
+      PlotRangePadding->{{
+         Scaled[0.02], 
+         Scaled[0.02]}, {
+         Scaled[0.05], 
+         Scaled[0.05]}},
+      Ticks->{Automatic, Automatic}], ",", 
+     GraphicsBox[{{}, {{}, 
+        {RGBColor[0.368417, 0.506779, 0.709798], PointSize[
+         0.012833333333333334`], AbsoluteThickness[1.6], 
+         PointBox[CompressedData["
+1:eJxF0l9IU2EYBvBD4Y1QQYyiHJOa0BpCxFwX0nq8UBtdGBtBUquLQYmEtIGg
+zOxGp9lFeSFBFmIkBAZCGTQ1o6bDpSZOt53Nf59agiO7c3ohYef5hLMXDocf
+HJ7vfd/vnPE+dN87pCiKRXv47n7JGkJ3s7d9dXMb5z3Pw1nLF2yoqw/oIVPw
+jyv0FXmTlW66z+fIV99+Q1m4tpTecoW0L75jv9dcRJfYWGNouOg6RjcZBq6u
+Bcbxaiq2JzSPZS3aCRGMdLVnaC1MS5yA8fPNFO1mnCuKIqc1Sh/09wP2v5kQ
+vR5g4CRu+Fv6hd7vNF7Ub7ym/WzP9xNbFUqn0PufQc3vSAutyJrFotHaKPR5
+ZlE9fLaOdq7xgBj2Iu+8Qp8vhjfpwWq6M8wB5pB8Vn5d6PPO4/LJ25W0HEed
+R/HRfw6hzx9HsMt+iS5kO6YEWqMnLtAyLpzA3fcjFvq+rCRE2zVzbj8qnq7v
+mmimGQZUDJ7KN+b2lcJUz/Jpeodx2RT6dzMFuf2lEQ9MFNJXZOACPHP2c7l9
+LqCswmyj29hecBGHxz+V01a53yXYPlTdoWemWUtoutXzmJbr8y1j+HifvA85
+rmEF2+nRX7RsL7QCPPpYzP9BxnkEOo6MPqH/AyEQZs0=
+          
+          "]]}, {}}, {}, {}, {{}, {}}},
+      AspectRatio->NCache[GoldenRatio^(-1), 0.6180339887498948],
+      Axes->{True, True},
+      AxesLabel->{None, None},
+      AxesOrigin->{0.09390625000000001, 1.3068533263059894`},
+      DisplayFunction->Identity,
+      Frame->{{False, False}, {False, False}},
+      FrameLabel->{{None, None}, {None, None}},
+      FrameTicks->{{Automatic, Automatic}, {Automatic, Automatic}},
+      GridLines->{None, None},
+      GridLinesStyle->Directive[
+        GrayLevel[0.5, 0.4]],
+      ImagePadding->All,
+      ImageSize->400,
+      Method->{"CoordinatesToolOptions" -> {"DisplayFunction" -> ({
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 1, 2][#]& )[
+             Part[#, 1]], 
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 2, 2][#]& )[
+             Part[#, 2]]}& ), "CopiedValueFunction" -> ({
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 1, 2][#]& )[
+             Part[#, 1]], 
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 2, 2][#]& )[
+             Part[#, 2]]}& )}},
+      PlotLabel->FormBox["\"omega=17nbas=10\"", TraditionalForm],
+      PlotRange->{{0.1, 0.49}, {1.306853394455106, 1.306854757437437}},
+      PlotRangeClipping->True,
+      PlotRangePadding->{{
+         Scaled[0.02], 
+         Scaled[0.02]}, {
+         Scaled[0.05], 
+         Scaled[0.05]}},
+      Ticks->{Automatic, Automatic}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{
+     GraphicsBox[{{}, {{}, 
+        {RGBColor[0.368417, 0.506779, 0.709798], PointSize[
+         0.012833333333333334`], AbsoluteThickness[1.6], 
+         PointBox[CompressedData["
+1:eJxF0FtIU3EcB/C1hZgvkk6CjNkQdQpGS8GHWF+JMEF8mOhDMKaJjkTJM2+E
+0UMPEx+EGdGVXiJ7Evbg0xQxnYqXVKabu3hFibOFF4i2ELrQ+f6Fsx+Mwwd2
+vuf3/RmbO+tatRqNxqT8+Hz/jjOOKvvr3Hg8gWKb25c0TSK7YExHjxtcR1bv
+FNI7G09iikckS0b40zRaup5F6GOrV/nHDCofn87R5WWcWVy8/maMfqr33D/o
+n8O0tvEjPZs0KV+YhyzdfEErYUriAvbrz57TdYyzLmLi1edu+ny/JdwbMjno
+w34GLkMe7XoQU/ddwY2mvlrayfWkVfxNL7obU/dfQ/W/JxW0RowfJe6Hpak+
+fuT9CeXT1Qf8wDrae/xXU/3W8dZYlUUP+1hgA/Yac0aqbwBfPgxpaVEnHECO
+u/63rPYPIk07mKDzuI5hE991xae0iPNt4shvidMOMSHImRuHsnqfMGoaznZp
+puk9Ycwnv0Zl9V4RJG51h+hfjEtGcGHVGJTV+0Xh0l0L0HdE4BakzAnh83tu
+wWzoEO8PcD3XNjzBqW26RNx3BxZ70zd6bYWzg45LhT9ocT5pFy+dWTr2F3X1
+e2gz23JpsZ53Dz+v9N6mRZxtH49Cl1vp/wt2Y6A=
+          
+          "]]}, {}}, {}, {}, {{}, {}}},
+      AspectRatio->NCache[GoldenRatio^(-1), 0.6180339887498948],
+      Axes->{True, True},
+      AxesLabel->{None, None},
+      AxesOrigin->{0.09390625000000001, 0},
+      DisplayFunction->Identity,
+      Frame->{{False, False}, {False, False}},
+      FrameLabel->{{None, None}, {None, None}},
+      FrameTicks->{{Automatic, Automatic}, {Automatic, Automatic}},
+      GridLines->{None, None},
+      GridLinesStyle->Directive[
+        GrayLevel[0.5, 0.4]],
+      ImagePadding->All,
+      ImageSize->400,
+      Method->{"CoordinatesToolOptions" -> {"DisplayFunction" -> ({
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 1, 2][#]& )[
+             Part[#, 1]], 
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 2, 2][#]& )[
+             Part[#, 2]]}& ), "CopiedValueFunction" -> ({
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 1, 2][#]& )[
+             Part[#, 1]], 
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 2, 2][#]& )[
+             Part[#, 2]]}& )}},
+      PlotLabel->FormBox["\"omega=18nbas=8\"", TraditionalForm],
+      PlotRange->{{0.1, 0.49}, {0, 2.61372151307336}},
+      PlotRangeClipping->True,
+      PlotRangePadding->{{
+         Scaled[0.02], 
+         Scaled[0.02]}, {
+         Scaled[0.02], 
+         Scaled[0.05]}},
+      Ticks->{Automatic, Automatic}], ",", 
+     GraphicsBox[{{}, {{}, 
+        {RGBColor[0.368417, 0.506779, 0.709798], PointSize[
+         0.012833333333333334`], AbsoluteThickness[1.6], 
+         PointBox[CompressedData["
+1:eJxF0E9Ik3EcBvC3wLBGlLESBY0xD9vskgk6Wz5ISJ6MeUmGECgaeLB5yGSy
+DsHaJXCQILNbiyICSUjYIsxNxZJtuOnc29L3VdEI9ejSFKH3+QnvvvDy8uF9
+eb5/TJ2P27rPSpJk0R6+x4KsCN4lHbfX/+zD2jEcy1u+IjbpNdORSt+uMzyF
+z1utF+m37jsXsqFpnPiHD1XNe86w9kcUri3TNl17izUDW2InTQ8Zx+9teGZx
+fz0VpWfyFq3DHF6FohO0FqYlzqO35v0buo1xzu+o/tA/Qp/O9wP2YImf3vQw
+cAGJT4MeVZ83jqujwT66n+O5E9j+/ahL1edPouGm3E5LohbhOlZbVX2fRfjC
+T5rplg02SOHKfMBR2C+F+JC1lg7EuEAaO832G4V9l+Da/1JFi3WyS6gzfawo
+7L+MhwvFpfR1jlOZwbfylcu0iItl8Ly3zED3iFpBqVcpKtwni7qi+jM004zj
+WQwMNp0o+r1kBBymI/ov4/IyquyGQ0W/309Y5bsHdKMIzCHzzCy+n94zh2p/
++TH9guP5fiE9PSmxn03cdxUD3tB5OhlnrWLEFrlGi/O51yA//WehxbpGBQ/O
+vW6ixXhhBeaxS520iOtQkZs1vKT/AykDY7g=
+          "]]}, {}}, {}, {}, {{}, {}}},
+      AspectRatio->NCache[GoldenRatio^(-1), 0.6180339887498948],
+      Axes->{True, True},
+      AxesLabel->{None, None},
+      AxesOrigin->{0.09390625000000001, 0},
+      DisplayFunction->Identity,
+      Frame->{{False, False}, {False, False}},
+      FrameLabel->{{None, None}, {None, None}},
+      FrameTicks->{{Automatic, Automatic}, {Automatic, Automatic}},
+      GridLines->{None, None},
+      GridLinesStyle->Directive[
+        GrayLevel[0.5, 0.4]],
+      ImagePadding->All,
+      ImageSize->400,
+      Method->{"CoordinatesToolOptions" -> {"DisplayFunction" -> ({
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 1, 2][#]& )[
+             Part[#, 1]], 
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 2, 2][#]& )[
+             Part[#, 2]]}& ), "CopiedValueFunction" -> ({
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 1, 2][#]& )[
+             Part[#, 1]], 
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 2, 2][#]& )[
+             Part[#, 2]]}& )}},
+      PlotLabel->FormBox["\"omega=18nbas=10\"", TraditionalForm],
+      PlotRange->{{0.1, 0.49}, {0, 2.613706523664423}},
+      PlotRangeClipping->True,
+      PlotRangePadding->{{
+         Scaled[0.02], 
+         Scaled[0.02]}, {
+         Scaled[0.02], 
+         Scaled[0.05]}},
+      Ticks->{Automatic, Automatic}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{
+     GraphicsBox[{{}, {{}, 
+        {RGBColor[0.368417, 0.506779, 0.709798], PointSize[
+         0.012833333333333334`], AbsoluteThickness[1.6], 
+         PointBox[CompressedData["
+1:eJxF0F1IU3EYBvCDFwkxKHAQQ9gwEKZYlNoHTHuwLlxg0fFCsbwytCtzhSVM
+IRAdXi0vjL4MshVdpSmoG4rolmlp4tz0TJuapadpgl40WxTYef7B2QuHww8O
+z3neN6OqrrQ6RZIkq/bw/eQxx4f3qzlfvsd+Iqvyvj9uHYZJqZqifebWH7J3
+BPeu/x6kXzoKDyqeUTQZQq/obdmrfTGGv+XhDjo/jxOAxbbeQjcau4vXnO9g
+v719hw7ErdofxtF3YfEGrYVpiROY3H10lS5lnDyJjcL0y/T/fh/gLpDP01+d
+DPyInuJjZ5J9p9Fs8OTQt1jP8QnZrtdHk/1nYFs/YaIlMbM4VHP6cHKfWfSe
+eptK29f4gyBqSx7uq/p+QbRXb/yi2/1cYA650oNdVd83hEt1XZu0WEcJ4Uri
+wDdV3z+M4ymBKG1hHfM8iirCC7SI88/jrNsWpGvELKCj4c+Uqt9HQWzZNEEz
+zdit4Mi1535Vv1cE7vpnI/Qe4+IRGBOZQ6p+v0Wkvyjz0udE4BISaWUDqn7P
+JQxZyvtpF+u1fobn5lPhbHHfKJyuu4P0zDQnCvNJWeSL8zmW0Wl/M0aLdY0r
+2Illif6inncFF1PbIrSIq1xFXm3PFv0PsKxqLw==
+          
+          "]]}, {}}, {}, {}, {{}, {}}},
+      AspectRatio->NCache[GoldenRatio^(-1), 0.6180339887498948],
+      Axes->{True, True},
+      AxesLabel->{None, None},
+      AxesOrigin->{0.09390625000000001, 0},
+      DisplayFunction->Identity,
+      Frame->{{False, False}, {False, False}},
+      FrameLabel->{{None, None}, {None, None}},
+      FrameTicks->{{Automatic, Automatic}, {Automatic, Automatic}},
+      GridLines->{None, None},
+      GridLinesStyle->Directive[
+        GrayLevel[0.5, 0.4]],
+      ImagePadding->All,
+      ImageSize->400,
+      Method->{"CoordinatesToolOptions" -> {"DisplayFunction" -> ({
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 1, 2][#]& )[
+             Part[#, 1]], 
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 2, 2][#]& )[
+             Part[#, 2]]}& ), "CopiedValueFunction" -> ({
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 1, 2][#]& )[
+             Part[#, 1]], 
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 2, 2][#]& )[
+             Part[#, 2]]}& )}},
+      PlotLabel->FormBox["\"omega=19nbas=8\"", TraditionalForm],
+      PlotRange->{{0.1, 0.49}, {0, 2.6137212912762755`}},
+      PlotRangeClipping->True,
+      PlotRangePadding->{{
+         Scaled[0.02], 
+         Scaled[0.02]}, {
+         Scaled[0.02], 
+         Scaled[0.05]}},
+      Ticks->{Automatic, Automatic}], ",", 
+     GraphicsBox[{{}, {{}, 
+        {RGBColor[0.368417, 0.506779, 0.709798], PointSize[
+         0.012833333333333334`], AbsoluteThickness[1.6], 
+         PointBox[CompressedData["
+1:eJxF0G9IE3EcBvCrF4JCYXi9Ev/1IqYQgQ19IfmQIPUiBpuvgmkhJZHQtheh
+aGggW2iQQYhY+kbzhW8k1GBSVM7+GUtmZjfneTcHWrZihl4vXEX3/IK7L4zj
+A7vnvs+3rNnnuXJQkiSH+ePzwRBnFtUFjVLy6x7Kvf0Rw/EMucZcWjc9WxxM
+u8PPoXpux+lH/tN5ythLXJ3qf0N/d4fNf8xBvf/iCe08xZnH8eSfcbpTnjy7
+0fEK3bXOQXrecJhfeI07iquXNsPMxLcYW6i5SXsY534Heeabj/6/3wL0nvOX
+6VQHA98jEGi4oFv7RlGXt+uiA1zP/wHyidJ6e/9FuH7GamhJTAy+nt+Vdp8Y
+nAceVtDnNviBJbRfHD9m91tCUdPRQvpehAU+4mnfZoHddxmN7iOHaFFHWcal
+woEcu/8n3Oi6LtElXKd4BaW3hvc10yIusoLt3RKDbhHzGalsNqNZ91HweLoq
+TTNNnlTQejixpVn3iuNaZi9F/2KcEcdIcFjXrPutonXnh0rXisAEQs78Nc26
+ZwItoaoEHeJ6wTW0ZUaFK8R9VZz0TIj3F6McFd7YVJIW5/OvIztw5gst6soa
+ZnKNHVqsF9YQbb77lxZxXh3bo0Y+7/EPj7JtLQ==
+          
+          "]]}, {}}, {}, {}, {{}, {}}},
+      AspectRatio->NCache[GoldenRatio^(-1), 0.6180339887498948],
+      Axes->{True, True},
+      AxesLabel->{None, None},
+      AxesOrigin->{0.09390625000000001, 0},
+      DisplayFunction->Identity,
+      Frame->{{False, False}, {False, False}},
+      FrameLabel->{{None, None}, {None, None}},
+      FrameTicks->{{Automatic, Automatic}, {Automatic, Automatic}},
+      GridLines->{None, None},
+      GridLinesStyle->Directive[
+        GrayLevel[0.5, 0.4]],
+      ImagePadding->All,
+      ImageSize->400,
+      Method->{"CoordinatesToolOptions" -> {"DisplayFunction" -> ({
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 1, 2][#]& )[
+             Part[#, 1]], 
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 2, 2][#]& )[
+             Part[#, 2]]}& ), "CopiedValueFunction" -> ({
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 1, 2][#]& )[
+             Part[#, 1]], 
+            (Part[{{Identity, Identity}, {Identity, Identity}}, 2, 2][#]& )[
+             Part[#, 2]]}& )}},
+      PlotLabel->FormBox["\"omega=19nbas=10\"", TraditionalForm],
+      PlotRange->{{0.1, 0.49}, {0, 2.6137063072099407`}},
+      PlotRangeClipping->True,
+      PlotRangePadding->{{
+         Scaled[0.02], 
+         Scaled[0.02]}, {
+         Scaled[0.02], 
+         Scaled[0.05]}},
+      Ticks->{Automatic, Automatic}]}], "}"}]}], "}"}]], "Output",
+ CellChangeTimes->{
+  3.78412350666992*^9, 3.784123895823393*^9, {3.784124991226654*^9, 
+   3.7841250171851053`*^9}, 3.784131681391696*^9, 3.784137473853182*^9, 
+   3.7841375240513763`*^9}]
+}, Open  ]]
+},
+WindowSize->{950, 1045},
+WindowMargins->{{Automatic, 5}, {5, Automatic}},
+FrontEndVersion->"11.0 for Linux x86 (64-bit) (July 28, 2016)",
+StyleDefinitions->"Default.nb"
+]
+(* End of Notebook Content *)
+
+(* Internal cache information *)
+(*CellTagsOutline
+CellTagsIndex->{}
+*)
+(*CellTagsIndex
+CellTagsIndex->{}
+*)
+(*NotebookFileOutline
+Notebook[{
+Cell[558, 20, 6607, 140, 738, "Input"],
+Cell[CellGroupData[{
+Cell[7190, 164, 2427, 54, 209, "Input"],
+Cell[9620, 220, 46055, 985, 5734, "Output"]
+}, Open  ]]
+}
+]
+*)
+
