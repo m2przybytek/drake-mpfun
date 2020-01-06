@@ -78,14 +78,18 @@ for c1 in np.arange(0.00, 1.00, 0.05):
 
                 for nbas in [14]:
                     for nocc in [1]:
-                        for omega in range(10, 31):
+                        # for omega in range(10, 31):
+                        for omega in range(10, 20, 2):
                             example_input_file["alpha"] = str(alpha)
                             example_input_file["nocc"] = str(nocc)
                             example_input_file["nbas"] = str(nbas)
                             example_input_file["omega"] = str(omega)
                             example_input_file["gfac"] = str(gfac)
 
-                            with open("../HERMITE.INP", "w") as outfile:
+                            home = os.environ.get("HOME")
+                            test_path = home + "/drake-mpfun"
+
+                            with open(f"{test_path}/HERMITE.INP", "w") as outfile:
                                 outfile.write("\n".join(example_input_file.values()))
 
                             file_name = construct_file_name(nocc, nbas, omega, gfac, alpha, c0, c1)
@@ -95,15 +99,13 @@ for c1 in np.arange(0.00, 1.00, 0.05):
 
                             file_path = "raw/" + file_name
 
-                            if not os.path.isfile(file_path):
-                                home = os.environ.get("HOME")
-                                test_path = home + "/drake-mpfun"
-                                result = subprocess.run(f"cd {test_path} && ./test", shell=True, stdout=subprocess.PIPE)
+                            # if not os.path.isfile(file_path):
+                            result = subprocess.run(f"cd {test_path} && ./test", shell=True, stdout=subprocess.PIPE)
 
-                                with open(file_path, "w") as outfile:
-                                    outfile.write(result.stdout.decode())
+                            with open(file_path, "w") as outfile:
+                                outfile.write(result.stdout.decode())
 
-                                output_converted.convert_output(file_name)
+                            output_converted.convert_output(file_name)
 
                             print(termcolor.colored("done", "green"))
 
