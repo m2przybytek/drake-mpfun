@@ -1,5 +1,6 @@
-COMPILER  = /home/mitek/programy/gcc-7.2.0/install
-FC        = $(COMPILER)/bin/gfortran
+FC       = /usr/bin/gfortran  #$(COMPILER)/bin/gfortran
+# COMPILER  = /home/mitek/programy/gcc-7.2.0/install
+# FC        = $(COMPILER)/bin/gfortran
 FFLAGS    = -fcheck=all -Wall -Wextra -Wunused -Wunused-parameter -Warray-temporaries -Wrealloc-lhs -Wrealloc-lhs-all -Wno-target-lifetime -pedantic -std=f2008
 #FFLAGS    = -O3
 OPENMP    = -fopenmp
@@ -11,7 +12,7 @@ MPFUNLIB  = -Lmpfun-$(MPFUNTYPE) -lmpfun
 
 ifeq ($(MPFUNTYPE),fort)
 else ifeq ($(MPFUNTYPE),mpfr)
-MPFUNLIB += -L/home/mitek/programy/mpfr-libs/install/lib -lmpfr -lgmp
+MPFUNLIB += -L/usr/lib -lmpfr -lgmp
 else
 $(error MPFUNTYPE not defined, possible values: fort,mpfr)
 endif

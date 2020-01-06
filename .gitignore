@@ -5,3 +5,7 @@ test
 *.f90~
 *.a
 #*.f90
+python/old
+python/raw
+python/results
+*__pycache__*

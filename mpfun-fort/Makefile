@@ -1,5 +1,6 @@
-COMPILER = /home/mitek/programy/gcc-7.2.0/install
-FC       = $(COMPILER)/bin/gfortran
+# COMPILER = /home/tgrining/programy/gcc-7.2.0/install
+# FC       = $(COMPILER)/bin/gfortran
+FC       = /usr/bin/gfortran  #$(COMPILER)/bin/gfortran
 FFLAGS   = -O3
 
 NAME = libmpfun.a
