@@ -35,6 +35,8 @@ def convert_output(file_name=None):
             with open(f"results/{file_}_FCCD", "w") as outfile:
                 outfile.write(fccd_energy[0])
 
+    return float(scf_energy[0]), float(mp2_energy[0]), float(mp2_ec_energy[0]), float(fccd_energy[0])
+
 
 if __name__ == "__main__":
     convert_output()
